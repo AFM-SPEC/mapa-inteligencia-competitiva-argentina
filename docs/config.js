@@ -4,7 +4,7 @@
 window.CONFIG = {
   organismo: "NEETI",
   area: "",
-  email: "",
+  email: "info@neetipol.com",
   telefono: "",
   direccion: "",
   formulario: "",

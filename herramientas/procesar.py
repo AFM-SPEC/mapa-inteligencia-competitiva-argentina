@@ -137,6 +137,47 @@ capas["peajes"] = puntos_de(cargar("capa_peajes.json"), lambda p: [limpiar(p.get
 capas["universidades"] = puntos_de(cargar("capa_universidades.json"), lambda p: [limpiar(p.get("fna")) or "Universidad"])
 capas["aerodromos"] = puntos_de(cargar("capa_aerodromos.json"), lambda p: [limpiar(p.get("fna")) or "Aeródromo"])
 capas["areas_protegidas"] = lineas_de(cargar("capa_areas_protegidas.json"), 0.005)
+# parques industriales y zonas francas: mapa de la Comisión de Industria y Comercio del Senado (Google My Maps)
+import xml.etree.ElementTree as ET
+_kml = open(f"{ORIGEN}/parques.kml", encoding="utf-8").read()
+_ns = {"k": "http://www.opengis.net/kml/2.2"}
+_doc = ET.fromstring(_kml.encode("utf-8")).find("k:Document", _ns)
+
+
+def _datos(pm):
+    d = {}
+    for x in pm.findall(".//k:Data", _ns):
+        v = x.find("k:value", _ns)
+        d[x.get("name")] = (v.text or "").strip() if v is not None else ""
+    return d
+
+
+def _num(x):
+    try:
+        return float(str(x).replace(",", "."))
+    except ValueError:
+        return None
+
+
+parques, zfrancas = [], []
+for fol in _doc.findall("k:Folder", _ns):
+    nombre_fol = fol.find("k:name", _ns).text
+    if nombre_fol not in ("LISTADO DE PARQUES", "ZONAS FRANCAS"):
+        continue
+    for pm in fol.findall("k:Placemark", _ns):
+        d = _datos(pm)
+        la_, lo_ = _num(d.get("Latitud")), _num(d.get("Longitud"))
+        if la_ is None or lo_ is None:
+            continue
+        nom = (pm.find("k:name", _ns).text or "").strip()
+        if nombre_fol == "ZONAS FRANCAS":
+            zfrancas.append([round(la_, 4), round(lo_, 4), nom, d.get("Provincia", "")])
+        else:
+            emp = _num(d.get("Cantidad de empresas establecidas"))
+            parques.append([round(la_, 4), round(lo_, 4), nom, d.get("Tipo", ""), d.get("Condicion", ""), d.get("Provincia", ""),
+                            int(emp) if emp is not None else None, _num(d.get("Superficie Has.")), d.get("Origen", "")])
+capas["parques"] = parques
+capas["zonas_francas"] = zfrancas
 capas["pesaje"] = puntos_de(cargar("capa_pesaje.json"))
 capas["aduanas"] = puntos_de(
     [f for f in cargar("capa_controles.json") if "aduana" in limpiar(f["properties"].get("gna") or f["properties"].get("fna")).lower()],
@@ -281,7 +322,9 @@ def dist_a_lineas(feats_lineas):
 
 mpc = np.array([m["pc"] for m in muni])
 for nombre in ["pasos", "centrales", "transformadoras", "yacimientos", "estaciones_servicio", "tanques", "salud", "fabricas",
-               "universidades", "puertos", "aeropuertos", "aerodromos", "peajes", "pesaje", "aduanas"]:
+               "universidades", "puertos", "aeropuertos", "aerodromos", "peajes", "pesaje", "aduanas", "parques", "zonas_francas"]:
+    if not capas[nombre]:
+        continue
     pcs = provincia_de(capas[nombre], la, lo, mpc)
     for fila, pc in zip(capas[nombre], pcs):
         fila.append(str(pc))
@@ -321,6 +364,8 @@ d, i = mas_cercano("pasos"); ind["d_paso"] = d; paso_i = i
 d, i = mas_cercano("puertos"); ind["d_puerto"] = d; puerto_i = i
 d, i = mas_cercano("aeropuertos"); ind["d_aero"] = d; aero_i = i
 d, i = mas_cercano("centrales"); ind["d_central"] = d
+d, i = mas_cercano("parques"); ind["d_parque"] = d; parque_i = i
+ind["parq30"] = cuenta_radio("parques", 30)
 d, i = mas_cercano("transformadoras"); ind["d_transf"] = d
 ind["salud10"] = cuenta_radio("salud", 10)
 ind["fab20"] = cuenta_radio("fabricas", 20)
@@ -336,6 +381,7 @@ for j, m in enumerate(muni):
     m["paso"] = capas["pasos"][paso_i[j]][2]
     m["puerto"] = capas["puertos"][puerto_i[j]][2]
     m["aero"] = capas["aeropuertos"][aero_i[j]][2]
+    m["parque"] = capas["parques"][parque_i[j]][2]
 
 # ---------- totales por provincia ----------
 por_prov = {}
