@@ -78,8 +78,20 @@ const WIDGETS = {
     }),
     W("A3 · Población según Censo 2022", async () => {
       const filas = [...est.vis].sort((a, b) => a.pv.localeCompare(b.pv, "es") || (b.pob || 0) - (a.pob || 0))
-        .map(m => [corto(m.pv), m.n, m.pob, m.d_ba, m.d_cor, m.d_ros, m.d_puerto]);
-      return tablaHTML("tA", [{ t: "Provincia" }, { t: "Gobierno local" }, { t: "Habitantes", num: 1 }, { t: "Dist. Buenos Aires (km)", num: 1 }, { t: "Dist. Córdoba (km)", num: 1 }, { t: "Dist. Rosario (km)", num: 1 }, { t: "Dist. al puerto más cercano (km)", num: 1 }], filas);
+        .map(m => [corto(m.pv), m.n, m.pob, m.em, m.pea, m.pea_t, m.d_ba, m.d_cor, m.d_ros, m.d_puerto]);
+      return tablaHTML("tA", [{ t: "Provincia" }, { t: "Gobierno local" }, { t: "Habitantes", num: 1 }, { t: "Edad mediana (años)", num: 1 }, { t: "Pobl. económicamente activa", num: 1 }, { t: "Tasa de actividad (%)", num: 1, f: v => v.toLocaleString("es-AR", { maximumFractionDigits: 1 }) }, { t: "Dist. Buenos Aires (km)", num: 1 }, { t: "Dist. Córdoba (km)", num: 1 }, { t: "Dist. Rosario (km)", num: 1 }, { t: "Dist. al puerto más cercano (km)", num: 1 }], filas);
+    }),
+    W("A4 · Población económicamente activa por provincia", async () => {
+      const por = {};
+      for (const m of est.vis) por[m.pv] = (por[m.pv] || 0) + (m.pea || 0);
+      return barrasHTML(Object.entries(por).map(([n, v]) => ({ n: corto(n), v })).sort((a, b) => b.v - a.v)) +
+        "<p class='nota'>Población de 14 años y más ocupada o que busca trabajo (Censo 2022). Calculada por gobierno local a partir de los radios censales; cuando un gobierno local no tiene dato propio se estima con la tasa de su departamento.</p>";
+    }),
+    W("A5 · Edad mediana por provincia", async () => {
+      const por = {};
+      for (const m of est.vis) if (m.em != null && m.pob) { const r = (por[m.pv] ||= { s: 0, p: 0 }); r.s += m.em * m.pob; r.p += m.pob; }
+      return barrasHTML(Object.entries(por).map(([n, r]) => ({ n: corto(n), v: r.s / r.p })).sort((a, b) => b.v - a.v), { fmtV: v => fmt1(v) + " años" }) +
+        "<p class='nota'>Promedio de las edades medianas de los gobiernos locales, ponderado por habitantes: es una aproximación, no la edad mediana oficial de la provincia.</p>";
     }),
   ],
   B: [
@@ -92,7 +104,23 @@ const WIDGETS = {
       (await filasCapa("pasos")).map(r => [r[2], r[3], r[4], r[7], r[5], r[6]]))),
   ],
   C: [
-    barrasProv("transformadoras", "C2 · Plantas transformadoras por provincia"),
+    W("C2 · Estaciones de alta tensión por provincia", async () => {
+      const pv = pvDePc();
+      return barrasHTML(contar(await filasCapa("estaciones_at"), r => corto(pv[ultimo(r)] || "")), { top: 24 });
+    }),
+    W("C2b · Potencia instalada en estaciones de alta tensión, por provincia (MVA)", async () => {
+      const pv = pvDePc(); const por = {};
+      for (const r of await filasCapa("estaciones_at")) { const n = corto(pv[ultimo(r)] || ""); por[n] = (por[n] || 0) + (r[6] || 0); }
+      return barrasHTML(Object.entries(por).map(([n, v]) => ({ n, v })).sort((a, b) => b.v - a.v), { top: 24, fmtV: v => fmt(v) + " MVA" }) +
+        "<p class='nota'>Es potencia INSTALADA de las estaciones que informan el dato (243 de 323). No es potencia disponible para nuevas conexiones: ese dato no se publica en forma abierta.</p>";
+    }),
+    W("C2c · Estaciones por concesionaria o propietaria", async () => barrasHTML(contar(await filasCapa("estaciones_at"), r => r[3]), { top: 15 })),
+    W("C2d · Estaciones transformadoras de alta tensión", async () => {
+      const pv = pvDePc();
+      return tablaHTML("tC2", [{ t: "Estación" }, { t: "Empresa" }, { t: "Provincia" }, { t: "Tensión de entrada (kV)" }, { t: "Tensión de salida (kV)" }, { t: "Potencia instalada (MVA)", num: 1 }, { t: "En servicio desde" }],
+        (await filasCapa("estaciones_at")).map(r => [r[2], r[3], corto(pv[ultimo(r)] || ""), r[4], r[5], r[6], r[7]]));
+    }),
+    barrasProv("transformadoras", "C2e · Plantas transformadoras (capa del IGN) por provincia"),
     W("C3 · Centrales eléctricas por tipo", async () => barrasHTML(contar(await filasCapa("centrales"), r => r[3]))),
     W("C4 · Centrales eléctricas", async () => { const pv = pvDePc(); return tablaHTML("tC", [{ t: "Nombre" }, { t: "Tipo" }, { t: "Provincia" }], (await filasCapa("centrales")).map(r => [r[2], r[3], corto(pv[ultimo(r)] || "")])); }),
   ],
@@ -112,6 +140,25 @@ const WIDGETS = {
     }),
   ],
   F: [
+    W("F1b · Parques y áreas industriales por provincia", async () => {
+      const pv = pvDePc();
+      return barrasHTML(contar(await filasCapa("parques"), r => corto(pv[ultimo(r)] || "")), { top: 24 });
+    }),
+    W("F1c · Parques y áreas industriales por tipo y estado", async () => {
+      const f = await filasCapa("parques");
+      const may = t => (t || "Sin dato").toLowerCase().replace(/^./, c => c.toUpperCase());
+      return barrasHTML(contar(f, r => may(r[3]))) + `<p class="rotulo" style="margin:10px 14px 0">Estado</p>` + barrasHTML(contar(f, r => may(r[4])));
+    }),
+    W("F1d · Parques y áreas industriales", async () => {
+      const pv = pvDePc();
+      return tablaHTML("tF1", [{ t: "Nombre" }, { t: "Tipo" }, { t: "Estado" }, { t: "Provincia" }, { t: "Empresas", num: 1 }, { t: "Superficie (ha)", num: 1, f: v => v.toLocaleString("es-AR", { maximumFractionDigits: 1 }) }, { t: "Gestión" }],
+        (await filasCapa("parques")).map(r => [r[2], r[3], r[4], corto(pv[ultimo(r)] || ""), r[6] || null, r[7], r[8]])) +
+        "<p class='nota'>Fuente: mapa de parques industriales de la Comisión de Industria y Comercio del Senado (2024). Las empresas instaladas y la superficie sólo figuran en parte de los casos. El Registro Nacional de Parques Industriales (RENPI) tiene una planilla de 2023 sin coordenadas, con problemas de cobertura reconocidos por el propio organismo.</p>";
+    }),
+    W("F1e · Zonas francas", async () => {
+      const pv = pvDePc();
+      return tablaHTML("tZF", [{ t: "Zona franca" }, { t: "Provincia" }, { t: "Norma de creación" }, { t: "Fecha" }], (await filasCapa("zonas_francas")).map(r => [r[2], corto(pv[ultimo(r)] || ""), r[3], r[4]]));
+    }),
     W("F2 · Fábricas por rubro (código ISIC del IGN)", async () => barrasHTML(contar(await filasCapa("fabricas"), r => ISIC[r[3]] || "Otros"), { top: 15 })),
     W("F3 · Fábricas por región", async () => { const pv = pvDePc(); return barrasHTML(contar(await filasCapa("fabricas"), r => REGION_DE[pv[ultimo(r)]] || "")); }),
     W("F4 · Fábricas y universidades por provincia", async () => {
@@ -131,9 +178,28 @@ const WIDGETS = {
     W("G4 · Puertos y aeropuertos", async () => { const pv = pvDePc(); const p = (await filasCapa("puertos")).map(r => [r[2], "Puerto", corto(pv[ultimo(r)] || "")]); const a = (await filasCapa("aeropuertos")).map(r => [r[2], "Aeropuerto", corto(pv[ultimo(r)] || "")]); return tablaHTML("tG", [{ t: "Nombre" }, { t: "Tipo" }, { t: "Provincia" }], [...p, ...a]); }),
   ],
   H: [
-    barrasProv("pasos", "H2 · Pasos de frontera por provincia"),
-    W("H3 · Pasos de frontera por país vecino", async () => barrasHTML(contar(await filasCapa("pasos"), r => r[5]).map(x => ({ n: x.n[0] + x.n.slice(1).toLowerCase(), v: x.v })))),
-    W("H4 · Pasos de frontera y aduanas", async () => { const pv = pvDePc(); const a = (await filasCapa("pasos")).map(r => [r[2], "Paso de frontera", corto(pv[ultimo(r)] || ""), r[5]]); const d = (await filasCapa("aduanas")).map(r => [r[2], "Aduana", corto(pv[ultimo(r)] || ""), ""]); return tablaHTML("tH", [{ t: "Nombre" }, { t: "Tipo" }, { t: "Provincia" }, { t: "País vecino" }], [...d, ...a]); }),
+    W("H2 · Importaciones por aduana", async () => {
+      const a = await json("aduanas_comercio.json"); const ok = pcsPermitidos();
+      return barrasHTML(a.aduanas.filter(x => !ok || ok.has(x.pc)).sort((x, y) => y.imp - x.imp).map(x => ({ n: x.n, v: x.imp / 1e6 })), { top: 15, fmtV: v => "US$ " + fmt(v) + " M" });
+    }),
+    W("H3 · Exportaciones registradas por aduana", async () => {
+      const a = await json("aduanas_comercio.json"); const ok = pcsPermitidos();
+      return barrasHTML(a.aduanas.filter(x => !ok || ok.has(x.pc)).sort((x, y) => y.exp - x.exp).map(x => ({ n: x.n, v: x.exp / 1e6 })), { top: 15, fmtV: v => "US$ " + fmt(v) + " M" }) +
+        `<p class='nota'>El archivo de exportaciones por aduana de ARCA reserva parte de los datos por secreto estadístico: lo que se muestra es el ${Math.round(100 * a.exp_total_aduanas / a.exp_total_nacional)} % del total de exportaciones que ARCA informa en el mismo período. Sirve para comparar aduanas, no para sumar el total del país.</p>`;
+    }),
+    W("H4 · Qué se importa (todo el país)", async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.cap_i.map(([n, v]) => ({ n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }); }),
+    W("H5 · De dónde se importa", async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.pais_i.map(([n, v]) => ({ n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }) + "<p class='nota'>País de origen de la mercadería.</p>"; }),
+    W("H6 · Qué se exporta (según el archivo por aduana)", async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.cap_e.map(([n, v]) => ({ n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }); }),
+    W("H7 · A dónde se exporta (según el archivo por aduana)", async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.pais_e.map(([n, v]) => ({ n: n === "Sin dato" ? "Sin país asignado" : n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }); }),
+    W("H8 · Comercio exterior por aduana", async () => {
+      const a = await json("aduanas_comercio.json"); const ok = pcsPermitidos(); const pv = pvDePc();
+      return tablaHTML("tH1", [{ t: "Aduana" }, { t: "Tipo" }, { t: "Provincia" }, { t: "Importaciones (US$ M)", num: 1 }, { t: "Exportaciones registradas (US$ M)", num: 1 }, { t: "Medio principal de importación" }],
+        a.aduanas.filter(x => !ok || ok.has(x.pc)).map(x => [x.n, x.zf ? "Zona franca" : "Aduana", corto(pv[x.pc] || ""), Math.round(x.imp / 1e6), Math.round(x.exp / 1e6), x.medio_i])) +
+        "<p class='nota'>Aduana de registro de la operación; no es el paso de frontera por donde cruzó la mercadería. Los códigos de aduana y su ubicación (por la ciudad que nombran) salen del anexo de la RG 1452 de ARCA.</p>";
+    }),
+    barrasProv("pasos", "H9 · Pasos de frontera por provincia"),
+    W("H10 · Pasos de frontera por país vecino", async () => barrasHTML(contar(await filasCapa("pasos"), r => r[5]).map(x => ({ n: x.n[0] + x.n.slice(1).toLowerCase(), v: x.v })))),
+    W("H11 · Pasos de frontera y puestos de control", async () => { const pv = pvDePc(); const a = (await filasCapa("pasos")).map(r => [r[2], "Paso de frontera", corto(pv[ultimo(r)] || ""), r[5]]); const d = (await filasCapa("aduanas")).map(r => [r[2], "Puesto de control (IGN)", corto(pv[ultimo(r)] || ""), ""]); return tablaHTML("tH", [{ t: "Nombre" }, { t: "Tipo" }, { t: "Provincia" }, { t: "País vecino" }], [...d, ...a]); }),
   ],
   I: [
     W("I2 · Destinos de las exportaciones (1.er semestre de 2025)", async () => "<div id='mapaMundo' class='mapa-mundo' aria-label='Mapa mundial de destinos'></div><p class='nota'>Cada círculo es un destino o bloque; su tamaño muestra el monto exportado. Las zonas no se superponen.</p>"),
@@ -200,7 +266,7 @@ function armarPanelCapas(t) {
   const cont = $("#panelCapas");
   if (!cont) return;
   const filas = t.capas.map(c => `<label><input type="checkbox" data-capa-panel="${c}" ${est.activas[c] ? "checked" : ""}><i style="background:${CAPAS[c].c}"></i>${esc(CAPAS[c].n)}</label>`).join("");
-  const rampa = t.coropleta ? `<p class="rotulo">Habitantes</p>${RAMPA.map((c, i) => `<span class="leg"><i style="background:${c}"></i>${["Menos de 2.000", "2.000 a 10.000", "10.000 a 50.000", "50.000 a 200.000", "Más de 200.000"][i]}</span>`).join("")}` : "";
+  const rampa = htmlRampa(t);
   cont.innerHTML = `<p class="rotulo">Capas</p>${filas || "<span class='leg'>Sólo el mapa base y los gobiernos locales</span>"}${rampa}
     <div class="panel-acciones"><button type="button" class="enlace" data-vista="fijar">Establecer vista actual como inicio</button><button type="button" class="enlace" data-vista="reset">Restablecer valores predeterminados</button></div>`;
 }

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fuentes y método · Mapa de inteligencia competitiva</title>
+<meta name="description" content="De dónde sale cada dato del mapa, cómo se calculó, qué se pudo verificar y qué falta.">
+<meta name="theme-color" content="#0b1d3a">
+<link rel="icon" type="image/png" href="assets/neeti-icono.png">
+<link rel="apple-touch-icon" href="assets/neeti-icono.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css?v=22">
+</head>
+<body>
+<a class="saltar" href="#principal">Ir al contenido principal</a>
+
+<header class="masthead">
+  <img src="assets/neeti-logo.png" alt="NEETI" class="masthead-logo" width="53" height="18">
+  <span class="masthead-titulo">Mapa de inteligencia competitiva</span>
+  <span class="masthead-nota">Datos abiertos del INDEC y del IGN</span>
+</header>
+
+<div class="herramientas" role="toolbar" aria-label="Accesibilidad">
+  <div class="acc" id="acc">
+    <span class="rotulo">Accesibilidad</span>
+    <button type="button" class="boton chico" data-acc="menos" aria-label="Disminuir el tamaño del texto">A−</button>
+    <button type="button" class="boton chico" data-acc="mas" aria-label="Aumentar el tamaño del texto">A+</button>
+    <button type="button" class="boton chico" data-acc="gris" aria-pressed="false">Escala de grises</button>
+    <button type="button" class="boton chico" data-acc="contraste" aria-pressed="false">Alto contraste</button>
+    <button type="button" class="boton chico" data-acc="subrayar" aria-pressed="false">Subrayar enlaces</button>
+    <button type="button" class="boton chico" data-acc="reset">Restablecer</button>
+  </div>
+</div>
+
+<nav class="menu" aria-label="Secciones del sitio">
+  <a href="index.html#sobre">Sobre el mapa</a>
+  <a href="index.html#mapa-seccion">Mapa</a>
+  <a href="index.html#estudios">Estudios</a>
+  <a href="preguntas.html">Preguntas frecuentes</a>
+  <a href="fuentes.html" aria-current="page">Fuentes y método</a>
+  <a href="index.html#contacto" id="menuContacto" hidden>Contacto</a>
+</nav>
+
+<main id="principal">
+  <section class="portada">
+    <p class="migas"><a href="index.html">Portada</a> <span aria-hidden="true">/</span> Fuentes y método</p>
+    <h1 class="titulo">Fuentes y método</h1>
+  </section>
+  <section class="faq">
+    <p class="nota">Esta página reúne de dónde sale cada dato del mapa, cómo se calculó y qué todavía no se consiguió. Los enlaces se abrieron uno por uno el 12 de octubre de 2026. Cada pantalla del mapa también trae su propio bloque «Fuentes de esta pantalla».</p>
+
+    <h2 class="rotulo">1 · Inventario de fuentes</h2>
+    <div class='tabla-caja'><table class='tabla'><thead><tr><th scope='col'>Dato</th><th scope='col'>Organismo</th><th scope='col'>Fuente (enlace)</th><th scope='col'>Formato</th><th scope='col'>Año</th><th scope='col'>Nivel</th><th scope='col'>Estado</th></tr></thead><tbody><tr><td>Edad mediana y población activa por gobierno local</td><td>INDEC</td><td><a href="https://datos.gob.ar/dataset/censo-nacional-de-poblacion-hogares-y-viviendas-2022" target="_blank" rel="noopener noreferrer">Censo 2022 por radio censal (un archivo por provincia)</a></td><td>ZIP con CSV (persona, hogar, vivienda)</td><td>2022</td><td>Radio censal → gobierno local</td><td>Abre y descarga. Verificado el 12/10/2026.</td></tr><tr><td>Códigos y población de gobiernos locales</td><td>INDEC</td><td><a href="https://www.indec.gob.ar/ftp/cuadros/geoestadistica/c2022_codigos_gobiernos_locales.xlsx" target="_blank" rel="noopener noreferrer">Códigos de gobiernos locales del Censo 2022</a></td><td>XLSX</td><td>2022</td><td>Gobierno local</td><td>Abre. Verificado.</td></tr><tr><td>Ubicación de gobiernos locales y capas (rutas, ferrocarril, puertos, salud, fábricas, etc.)</td><td>IGN</td><td><a href="https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG" target="_blank" rel="noopener noreferrer">Capas SIG del IGN</a></td><td>WFS / SHP</td><td>Varias</td><td>Punto o línea</td><td>Abre. Verificado. La descarga se hizo por el servicio WFS.</td></tr><tr><td>Estaciones transformadoras de alta tensión (potencia instalada)</td><td>Secretaría de Energía</td><td><a href="https://datos.gob.ar/dataset/transporte-electrico-at-estaciones-transformadoras" target="_blank" rel="noopener noreferrer">Transporte eléctrico AT: estaciones transformadoras</a></td><td>CSV / SHP</td><td>Actualizado 05/10/2026</td><td>Punto (323)</td><td>Abre y descarga. 80 estaciones sin potencia.</td></tr><tr><td>Importaciones y exportaciones por aduana</td><td>ARCA</td><td><a href="https://www.arca.gob.ar/operadoresComercioExterior/informacionAgregada/informacion-agregada.asp" target="_blank" rel="noopener noreferrer">Información de comercio exterior</a></td><td>ZIP mensual con archivos .lst</td><td>02/2017 a 09/2026</td><td>Aduana, mes, producto, país</td><td>Abre y descarga. Verificado.</td></tr><tr><td>Manual de lectura de los archivos de ARCA</td><td>ARCA</td><td><a href="https://www.arca.gob.ar/operadoresComercioExterior/documentos/Procedimiento-descarga-y-lectura-archivos-de-ComExAFIP-2018.pdf" target="_blank" rel="noopener noreferrer">Procedimiento de descarga y lectura</a></td><td>PDF</td><td>2018</td><td>—</td><td>Abre. Es de 2018: el formato se comprobó leyendo los archivos.</td></tr><tr><td>Códigos de aduanas y de países</td><td>ARCA</td><td><a href="https://www.arca.gob.ar/Aplicativos/oProgramasAduaneros/prestadores/rg1452.zip" target="_blank" rel="noopener noreferrer">Anexo de la RG 1452</a></td><td>ZIP</td><td>Vigente</td><td>73 aduanas y zonas francas</td><td>Abre y descarga.</td></tr><tr><td>Exportaciones por provincia</td><td>INDEC</td><td><a href="https://www.indec.gob.ar/uploads/informesdeprensa/opex_03_26929F77A2CA.pdf" target="_blank" rel="noopener noreferrer">Origen provincial de las exportaciones</a></td><td>PDF y planilla</td><td>1.er semestre 2025</td><td>Provincia</td><td>Abre. Verificado.</td></tr><tr><td>Registro Nacional de Parques Industriales (RENPI)</td><td>Secretaría de Industria y Comercio</td><td><a href="https://datos.gob.ar/dataset/registro-nacional-de-parques-industriales-renpi" target="_blank" rel="noopener noreferrer">Ficha en datos.gob.ar</a></td><td>ODS</td><td>Agosto de 2023</td><td>Nombre y provincia, sin coordenadas</td><td>Abre. Planilla desactualizada.</td></tr><tr><td>Parques industriales y zonas francas con ubicación</td><td>Comisión de Industria y Comercio del Senado</td><td>Mapa de Parques Industriales de la Argentina (sin enlace directo comprobado)</td><td>KML</td><td>24/06/2024</td><td>Punto (606 parques y 13 zonas francas)</td><td>Se usó el archivo; no se halló una dirección oficial estable para citar.</td></tr></tbody></table></div>
+
+    <h2 class="rotulo">2 · Equivalencia con el mapa de Paraguay</h2>
+    <p class="nota">Clasificación: A, dato abierto listo para usar · B, abierto pero requiere procesamiento · C, se reconstruye uniendo fuentes · D, es público pero hay que pedirlo · E, no se halló tras buscar.</p>
+    <div class='tabla-caja'><table class='tabla'><thead><tr><th scope='col'>Capa del mapa de Paraguay</th><th scope='col'>Equivalente en Argentina</th><th scope='col'>Parecido</th><th scope='col'>Límites</th><th scope='col'>Clase</th></tr></thead><tbody><tr><td>Edad mediana por municipio</td><td>Edad mediana por gobierno local, calculada con el Censo 2022 por radio censal</td><td>Alta (validada)</td><td>Los radios que cruzan dos gobiernos locales se reparten por viviendas.</td><td>B · abierto, con procesamiento</td></tr><tr><td>Población económicamente activa por municipio</td><td>Ocupados + desocupados de 14 años y más, por gobierno local</td><td>Alta (validada)</td><td>Igual que arriba. 186 gobiernos locales sin dato propio usan el de su departamento (rotulado).</td><td>B · abierto, con procesamiento</td></tr><tr><td>Potencia eléctrica disponible por subestación</td><td>Potencia INSTALADA (MVA) de 323 estaciones de alta tensión</td><td>Parcial</td><td>No es potencia disponible para nuevas conexiones. Ese dato no se halló publicado.</td><td>Instalada: A · Disponible: D (hay que pedirla) o E</td></tr><tr><td>Importaciones y exportaciones por aduana</td><td>Importaciones y exportaciones por aduana de registro, 12 meses</td><td>Alta en importaciones; parcial en exportaciones</td><td>Las exportaciones por aduana cubren cerca del 45 % del total (reserva estadística). La ubicación sale de la ciudad del nombre.</td><td>B · abierto, con procesamiento</td></tr><tr><td>Parques industriales</td><td>606 parques y áreas industriales y 13 zonas francas</td><td>Media</td><td>Empresas y superficie sólo en parte de los casos. Falta cruzar con registros provinciales y con el RENPI.</td><td>B (parcial) · falta unificar</td></tr><tr><td>Plan de ordenamiento urbano y territorial (POUT, concepto de Paraguay)</td><td>Sin equivalente nacional</td><td>Nula</td><td>No se halló un registro abierto nacional.</td><td>E · no localizado</td></tr></tbody></table></div>
+
+    <h2 class="rotulo">3 · Cómo se calculó</h2>
+    <ul>
+      <li><strong>Edad mediana y población activa.</strong> Del Censo 2022 por radio censal se toma la edad de cada persona y su condición de actividad (ocupado, desocupado, inactivo). Cada radio se asigna a su gobierno local por la cantidad de viviendas; si un radio cae en dos gobiernos locales, sus personas se reparten en proporción a las viviendas. La edad mediana es la edad que deja a la mitad de la población por debajo. Población económicamente activa = ocupados + desocupados, de 14 años y más. Comprobación: sumando los radios por departamento, la edad mediana coincide con la que publica el INDEC en 510 de 512 departamentos (en los otros 2 difiere en un año) y la población activa coincide exactamente.</li>
+      <li><strong>Gobiernos locales sin dato propio.</strong> Para los que no figuran en el cuadro por radios se muestran los valores de su departamento, y la ficha lo aclara. Para la Ciudad Autónoma de Buenos Aires se usa el dato oficial de toda la ciudad.</li>
+      <li><strong>Importaciones por aduana.</strong> En el archivo de ARCA cada ítem aparece repetido, una vez por cada impuesto; el valor FOB en dólares se cuenta una sola vez por ítem (aduana, destinación y número de ítem). El resultado mensual da unos 5.500 millones de dólares, un orden de magnitud razonable para el país.</li>
+      <li><strong>Exportaciones por aduana.</strong> Se usa el archivo «agregado» de ARCA, que oculta parte de los datos por secreto estadístico; por eso suma cerca del 45 % del total que la misma ARCA informa. Sirve para comparar aduanas.</li>
+      <li><strong>Errores en los archivos de ARCA.</strong> Tres renglones del archivo de exportaciones por aduana tenían valores imposibles y se excluyeron: naftas por US$ 16.925 millones para 40.000 toneladas (San Lorenzo, agosto de 2026) y dos de combustibles con más de US$ 3 por kilo (Campana, noviembre de 2025 y julio de 2026). Los renglones equivalentes también se sacaron del total nacional con el que se compara. Regla: más de US$ 1.000 millones en un renglón y más de US$ 20 por kilo, o combustibles con más de US$ 200 millones y más de US$ 3 por kilo. Cada resumen mensual deja registrado lo excluido. Conviene avisarle a ARCA.</li>
+      <li><strong>Aduana no es paso de frontera.</strong> La aduana es donde se registra la operación; el paso es por donde cruza la mercadería. Se muestran por separado.</li>
+      <li><strong>Estaciones de alta tensión.</strong> Se muestra la potencia instalada que informa la Secretaría de Energía. No equivale a potencia disponible.</li>
+      <li><strong>Distancias.</strong> En línea recta desde el punto del IGN de cada gobierno local, no por camino.</li>
+    </ul>
+
+    <h2 class="rotulo">4 · Cómo se cruza con el territorio</h2>
+    <ul>
+      <li>Cada gobierno local tiene un código de 6 dígitos del INDEC; los 2 primeros son la provincia. El departamento no se deduce del código: se determina por la ubicación del punto.</li>
+      <li>El punto de cada gobierno local (IGN) se ubica dentro de un departamento y de una provincia con los límites oficiales del IGN.</li>
+      <li>Las estaciones, aduanas, parques y demás puntos se asignan a la provincia que los contiene y se calcula la distancia a cada gobierno local.</li>
+      <li>Municipio, gobierno local y departamento no son lo mismo: en la provincia de Buenos Aires el partido coincide con el municipio, pero en otras provincias un departamento reúne varios gobiernos locales.</li>
+    </ul>
+
+    <h2 class="rotulo">5 · Lo que falta y a quién pedirlo</h2>
+    <div class='tabla-caja'><table class='tabla'><thead><tr><th scope='col'>Dato que falta</th><th scope='col'>Organismo que lo tiene</th><th scope='col'>Cómo conseguirlo</th></tr></thead><tbody><tr><td>Potencia disponible por estación (MW libres para nuevas conexiones)</td><td>CAMMESA, el ente regulador de la electricidad (ENRE/ENReGE) y las transportistas (Transener, Transba y otras)</td><td>Pedido de acceso a la información pública (Ley 27.275)</td></tr><tr><td>Exportaciones por aduana sin reserva estadística</td><td>ARCA (Dirección General de Aduanas)</td><td>Pedido de acceso a la información pública</td></tr><tr><td>Registro actualizado y georreferenciado de parques industriales (superficie, empresas, empleo, servicios)</td><td>Secretaría de Industria y Comercio (RENPI) y los organismos provinciales de industria</td><td>Pedido de acceso a la información pública y revisión de los portales provinciales (Buenos Aires, Entre Ríos, Córdoba, Santa Fe, Mendoza y otras)</td></tr><tr><td>Límites exactos y código de cada aduana en el mapa</td><td>ARCA</td><td>Pedido de acceso a la información pública</td></tr><tr><td>Planes de ordenamiento territorial por municipio</td><td>Organismos provinciales de ordenamiento territorial</td><td>Revisión provincia por provincia y pedido de información</td></tr></tbody></table></div>
+
+    <h2 class="rotulo">6 · Qué fuentes conviene usar primero</h2>
+    <div class='tabla-caja'><table class='tabla'><thead><tr><th scope='col'>Orden</th><th scope='col'>Fuente</th><th scope='col'>Por qué</th><th scope='col'>Confiabilidad</th></tr></thead><tbody><tr><td>1</td><td>Censo 2022 por radio censal (INDEC)</td><td>Abierto, nacional, municipal; se procesa con un script</td><td>Alta</td></tr><tr><td>2</td><td>Comercio exterior por aduana (ARCA)</td><td>Abierto y mensual; archivos grandes (unos 160 MB por mes)</td><td>Alta</td></tr><tr><td>3</td><td>Capas del IGN</td><td>Abierto, nacional; sin datos de capacidad</td><td>Alta</td></tr><tr><td>4</td><td>Estaciones de alta tensión (Secretaría de Energía)</td><td>Abierto y actualizado; sólo potencia instalada</td><td>Media</td></tr><tr><td>5</td><td>Parques industriales (Senado y RENPI)</td><td>Abierto pero desactualizado y sin unificar</td><td>Media</td></tr></tbody></table></div>
+    <p class="nota">El mapa de Paraguay que se tomó como modelo está en <a href="https://www.mic.gov.py/mapamic/" target="_blank" rel="noopener noreferrer">mic.gov.py/mapamic</a>. Las diferencias de método entre ambos países se explican arriba.</p>
+  </section>
+</main>
+<footer class="pie">
+  <img src="assets/neeti-logo.png" alt="NEETI" class="pie-logo" width="39" height="13">
+  <div class="pie-texto">
+    <p>Mapa de inteligencia competitiva · Argentina. Basado en datos abiertos del INDEC y del Instituto Geográfico Nacional.</p>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="comun.js"></script>
+</body>
+</html>

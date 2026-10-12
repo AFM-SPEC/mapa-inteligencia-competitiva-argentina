@@ -59,7 +59,11 @@ const CAPAS = {
   ductos: { n: "Ductos", f: "capa_ductos.json", t: "lineas", c: "#5f7f5a", w: 1.4 },
   areas_protegidas: { n: "Áreas protegidas (límites)", f: "capa_areas_protegidas.json", t: "lineas", c: "#5f7f5a", w: 1 },
   pasos: { n: "Pasos de frontera", f: "capa_pasos.json", t: "puntos", c: "#8a5b12", r: 5, info: p => ({ t: p[2], s: `${p[3]} · ${p[4]}${p[5] ? " · con " + p[5] : ""}`, x: p[6] ? "Cruce " + p[6].toLowerCase() : "" }) },
-  aduanas: { n: "Aduanas", f: "capa_aduanas.json", t: "puntos", c: "#0b1d3a", r: 6, info: p => ({ t: p[2] }) },
+  aduanas_com: { n: "Aduanas (comercio exterior)", f: "aduanas_comercio.json", t: "aduanas", c: "#0b1d3a" },
+  aduanas: { n: "Puestos de control aduanero (IGN)", f: "capa_aduanas.json", t: "puntos", c: "#8a5b12", r: 4, info: p => ({ t: p[2] }) },
+  estaciones_at: { n: "Estaciones transformadoras de alta tensión", f: "capa_estaciones_at.json", t: "puntos", c: "#3a5f8a", r: 4.5, info: p => ({ t: p[2], s: [p[3], p[4] ? p[4] + " kV" : ""].filter(Boolean).join(" · "), x: p[6] ? `Potencia instalada: ${fmt(p[6])} MVA` + (p[7] ? ` · en servicio desde ${p[7]}` : "") : "Potencia instalada: sin dato" }) },
+  parques: { n: "Parques y áreas industriales", f: "capa_parques.json", t: "puntos", c: "#9b2c22", r: 3.6, info: p => ({ t: p[2], s: `${p[3]} · ${p[4]} · ${p[5]}`, x: [p[6] ? p[6] + " empresas" : "", p[7] ? fmt1(p[7]) + " ha" : "", p[8] || ""].filter(Boolean).join(" · ") }) },
+  zonas_francas: { n: "Zonas francas", f: "capa_zonas_francas.json", t: "puntos", c: "#c4892b", r: 6, info: p => ({ t: p[2], s: p[3], x: p[4] ? "Habilitada el " + p[4] : "" }) },
   centrales: { n: "Centrales eléctricas", f: "capa_centrales.json", t: "puntos", c: "#9b2c22", r: 4.5, info: p => ({ t: p[2], s: p[3] }) },
   transformadoras: { n: "Plantas transformadoras", f: "capa_transformadoras.json", t: "puntos", c: "#3a5f8a", r: 3.5, info: p => ({ t: p[2] }) },
   yacimientos: { n: "Yacimientos de hidrocarburos", f: "capa_yacimientos.json", t: "puntos", c: "#0b1d3a", r: 5, info: p => ({ t: p[2] }) },
@@ -78,6 +82,13 @@ const CAPAS = {
 /* indicadores por gobierno local que se pueden ordenar */
 const METRICAS = {
   pob: { l: "Habitantes", u: "", dir: "desc" },
+  em: { l: "Edad mediana", u: " años", dir: "desc" },
+  pea: { l: "Población económicamente activa", u: "", dir: "desc" },
+  pea_t: { l: "Tasa de actividad", u: " %", dir: "desc", dec: 1 },
+  des_t: { l: "Desocupación (sobre la PEA)", u: " %", dir: "desc", dec: 1 },
+  d_at: { l: "Distancia a estación transformadora AT", u: " km", dir: "desc" },
+  d_parque: { l: "Distancia a parque industrial", u: " km", dir: "asc" },
+  parq30: { l: "Parques industriales a ≤30 km", u: "", dir: "desc" },
   d_ruta: { l: "Distancia a ruta nacional", u: " km", dir: "desc" },
   d_tren: { l: "Distancia a ferrocarril", u: " km", dir: "desc" },
   d_paso: { l: "Distancia a paso de frontera", u: " km", dir: "asc" },
@@ -98,15 +109,16 @@ const pct = (n, t) => (t ? Math.round((100 * n) / t) + " %" : "—");
 
 const TABS = [
   {
-    id: "A", nombre: "A · Zonas y ciudades", capas: ["areas_protegidas"], capasOff: ["areas_protegidas"], coropleta: true, metricas: ["pob"],
+    id: "A", nombre: "A · Zonas y ciudades", capas: ["areas_protegidas"], capasOff: ["areas_protegidas"], coropleta: true, metricas: ["pob", "em", "pea", "pea_t", "des_t"],
     titulo: "A1 · Población por provincia y gobierno local",
-    nota: "Cada círculo es un gobierno local; su tamaño y color dependen de los habitantes del Censo 2022. Tocá un círculo o una provincia para ver el detalle.",
+    nota: "Cada círculo es un gobierno local; su tamaño y color dependen de los habitantes del Censo 2022. Con el selector del ranking se pinta el mapa por edad mediana o población activa. Tocá un círculo o una provincia para ver el detalle.",
     kpis: v => [
       ["Provincias", fmt(new Set(v.map(m => m.pv)).size), "jurisdicciones"],
       ["Gobiernos locales", fmt(v.length), "con ubicación"],
       ["Habitantes", fmt(sum(v, m => m.pob)), "Censo 2022"],
       ["Viviendas", fmt(sum(v, m => m.viv)), "Censo 2022"],
-      ["Habitantes por vivienda", fmt1(sum(v, m => m.pob) / (sum(v, m => m.viv) || 1)), "promedio"],
+      ["Población económicamente activa", fmt(sum(v, m => m.pea)), "Censo 2022 · 14 años y más"],
+      ["Edad mediana", fmt1(sum(v.filter(m => m.em != null && m.pob), m => m.em * m.pob) / (sum(v.filter(m => m.em != null && m.pob), m => m.pob) || 1)) + " años", "promedio ponderado por habitantes"],
       ["Mayor población", v.length ? [...v].sort((a, b) => (b.pob || 0) - (a.pob || 0))[0].n.replace(/ \(15 comunas\)/, "") : "—", "en la selección"],
     ],
   },
@@ -124,16 +136,16 @@ const TABS = [
     ],
   },
   {
-    id: "C", nombre: "C · Red eléctrica", capas: ["lineas_electricas", "centrales", "transformadoras"], metricas: ["d_central", "d_transf"],
-    titulo: "C1 · Centrales, plantas transformadoras y líneas de transmisión",
-    nota: "Se muestran las líneas de transmisión principales de la capa del IGN (clases de tensión 2 y 6). La distancia a una central o planta no equivale a tener conexión.",
+    id: "C", nombre: "C · Red eléctrica", capas: ["lineas_electricas", "estaciones_at", "centrales", "transformadoras"], capasOff: ["transformadoras"], metricas: ["d_at", "d_central", "d_transf"],
+    titulo: "C1 · Estaciones transformadoras de alta tensión, centrales y líneas de transmisión",
+    nota: "Las estaciones de alta tensión (323) vienen de la Secretaría de Energía, con tensión y potencia INSTALADA en MVA. No hay una publicación abierta de la potencia DISPONIBLE para nuevas conexiones: no se debe leer la potencia instalada como capacidad libre.",
     kpis: v => [
+      ["Estaciones de alta tensión", "323", "Secretaría de Energía"],
+      ["Potencia instalada informada", "33.013 MVA", "243 estaciones con dato"],
       ["Centrales eléctricas", "445", "todo el país"],
-      ["Plantas transformadoras", "493", "todo el país"],
-      ["Gobiernos locales", fmt(v.length), "en la selección"],
-      ["A ≤10 km de una planta transformadora", fmt(cuenta(v, m => m.d_transf <= 10)), pct(cuenta(v, m => m.d_transf <= 10), v.length)],
-      ["A más de 50 km de una planta transformadora", fmt(cuenta(v, m => m.d_transf > 50)), pct(cuenta(v, m => m.d_transf > 50), v.length)],
-      ["Distancia media a central", fmt1(prom(v, "d_central")) + " km", "en la selección"],
+      ["A ≤25 km de una estación AT", fmt(cuenta(v, m => m.d_at <= 25)), pct(cuenta(v, m => m.d_at <= 25), v.length)],
+      ["A más de 100 km de una estación AT", fmt(cuenta(v, m => m.d_at > 100)), pct(cuenta(v, m => m.d_at > 100), v.length)],
+      ["Distancia media a estación AT", fmt1(prom(v, "d_at")) + " km", "en la selección"],
     ],
   },
   {
@@ -163,16 +175,16 @@ const TABS = [
     ],
   },
   {
-    id: "F", nombre: "F · Industrias", capas: ["fabricas", "universidades"], metricas: ["fab20", "univ30"],
-    titulo: "F1 · Fábricas y universidades",
-    nota: "Establecimientos de fabricación y procesamiento registrados por el IGN (un relevamiento cartográfico, no un registro de empresas) y universidades como referencia de formación.",
+    id: "F", nombre: "F · Industrias", capas: ["parques", "zonas_francas", "fabricas", "universidades"], capasOff: ["universidades"], metricas: ["d_parque", "parq30", "fab20", "univ30"],
+    titulo: "F1 · Parques industriales, zonas francas, fábricas y universidades",
+    nota: "Parques y áreas industriales según el mapa de la Comisión de Industria y Comercio del Senado (2024) y zonas francas; fábricas del IGN (un relevamiento cartográfico, no un registro de empresas). Un parque industrial no es un establecimiento individual.",
     kpis: v => [
-      ["Fábricas registradas", "2.226", "todo el país"],
-      ["Gobiernos locales", fmt(v.length), "en la selección"],
+      ["Parques y áreas industriales", "606", "mapa del Senado, 2024"],
+      ["Zonas francas", "13", "todo el país"],
+      ["Con un parque a ≤30 km", fmt(cuenta(v, m => m.parq30 > 0)), pct(cuenta(v, m => m.parq30 > 0), v.length)],
+      ["Fábricas registradas", "2.226", "IGN, todo el país"],
       ["Con alguna fábrica a ≤20 km", fmt(cuenta(v, m => m.fab20 > 0)), pct(cuenta(v, m => m.fab20 > 0), v.length)],
-      ["Con 10 o más a ≤20 km", fmt(cuenta(v, m => m.fab20 >= 10)), pct(cuenta(v, m => m.fab20 >= 10), v.length)],
-            ["Universidades", "1.132", "todo el país"],
-      ["Con alguna universidad a ≤30 km", fmt(cuenta(v, m => m.univ30 > 0)), pct(cuenta(v, m => m.univ30 > 0), v.length)],
+      ["Con 10 o más fábricas a ≤20 km", fmt(cuenta(v, m => m.fab20 >= 10)), pct(cuenta(v, m => m.fab20 >= 10), v.length)],
     ],
   },
   {
@@ -189,17 +201,24 @@ const TABS = [
     ],
   },
   {
-    id: "H", nombre: "H · Aduanas", capas: ["pasos", "aduanas", "limites"], metricas: ["d_paso"],
-    titulo: "H1 · Pasos de frontera y aduanas",
-    nota: "El IGN registra 10 aduanas y 158 pasos de frontera internacionales; las aduanas interiores no figuran en la capa pública.",
-    kpis: v => [
-      ["Pasos de frontera", "158", "todo el país"],
-      ["Aduanas registradas", "10", "capa del IGN"],
-      ["Gobiernos locales", fmt(v.length), "en la selección"],
-      ["A ≤50 km de un paso", fmt(cuenta(v, m => m.d_paso <= 50)), pct(cuenta(v, m => m.d_paso <= 50), v.length)],
-      ["A más de 300 km de un paso", fmt(cuenta(v, m => m.d_paso > 300)), pct(cuenta(v, m => m.d_paso > 300), v.length)],
-      ["Distancia media a un paso", fmt1(prom(v, "d_paso")) + " km", "en la selección"],
-    ],
+    id: "H", nombre: "H · Aduanas", capas: ["aduanas_com", "pasos", "limites", "aduanas"], capasOff: ["aduanas"], metricas: ["d_paso"],
+    titulo: "H1 · Comercio exterior por aduana",
+    nota: "Cada círculo es una aduana (de registro de la operación); su tamaño muestra importaciones más exportaciones de los últimos 12 meses publicados por ARCA. Una aduana no es un paso de frontera: los pasos se muestran aparte. Las exportaciones por aduana son parciales (reserva estadística de ARCA).",
+    kpis: () => {
+      const a = est.adu;
+      if (!a) return [];
+      const top = [...a.aduanas].sort((x, y) => y.imp - x.imp)[0];
+      const topE = [...a.aduanas].sort((x, y) => y.exp - x.exp)[0];
+      const M = v => "US$ " + Math.round(v / 1e6).toLocaleString("es-AR") + " M";
+      return [
+        ["Aduanas con operaciones", fmt(a.aduanas.length), "incluye zonas francas"],
+        ["Importaciones", M(a.imp_total), `${a.desde.slice(4)}/${a.desde.slice(0, 4)} a ${a.hasta.slice(4)}/${a.hasta.slice(0, 4)}`],
+        ["Exportaciones por aduana", M(a.exp_total_aduanas), `${Math.round(100 * a.exp_total_aduanas / a.exp_total_nacional)} % del total de ARCA`],
+        ["Mayor aduana importadora", top.n, M(top.imp)],
+        ["Mayor aduana exportadora", topE.n, M(topE.exp)],
+        ["Pasos de frontera", "158", "todo el país"],
+      ];
+    },
   },
   {
     id: "I", nombre: "I · Comercio global", capas: [], metricas: ["pob"], especial: true,
@@ -208,6 +227,33 @@ const TABS = [
     kpis: () => [],
   },
 ];
+
+
+/* ---------- fuentes de cada pantalla (enlaces comprobados; «sin enlace» = no se halló una dirección oficial estable) ---------- */
+const F_IGN = { t: "Instituto Geográfico Nacional (IGN) · Capas SIG: ubicación de los gobiernos locales y capas de infraestructura", u: "https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasSIG" };
+const F_CENSO = { t: "INDEC · Censo Nacional de Población, Hogares y Viviendas 2022", u: "https://www.indec.gob.ar/indec/web/Nivel4-Tema-2-41-165" };
+const F_CODIGOS = { t: "INDEC · Códigos de gobiernos locales del Censo 2022 (planilla)", u: "https://www.indec.gob.ar/ftp/cuadros/geoestadistica/c2022_codigos_gobiernos_locales.xlsx" };
+const F_RADIOS = { t: "INDEC · Censo 2022 por radio censal, un archivo por provincia (datos.gob.ar): base de la edad mediana y la población activa por gobierno local", u: "https://datos.gob.ar/dataset/censo-nacional-de-poblacion-hogares-y-viviendas-2022" };
+const F_ARCA = { t: "ARCA · Información de comercio exterior (archivos mensuales por aduana, octubre 2025 a septiembre 2026)", u: "https://www.arca.gob.ar/operadoresComercioExterior/informacionAgregada/informacion-agregada.asp" };
+const F_ARCA_MAN = { t: "ARCA · Manual de descarga y lectura de los archivos de comercio exterior", u: "https://www.arca.gob.ar/operadoresComercioExterior/documentos/Procedimiento-descarga-y-lectura-archivos-de-ComExAFIP-2018.pdf" };
+const F_ARCA_COD = { t: "ARCA · Códigos de aduanas y de países (anexo de la RG 1452)", u: "https://www.arca.gob.ar/Aplicativos/oProgramasAduaneros/prestadores/rg1452.zip" };
+const F_SENADO = { t: "Mapa de Parques Industriales de la Argentina · Comisión de Industria y Comercio del Senado de la Nación (archivo del 24/06/2024; sin enlace directo comprobado)" };
+const F_RENPI = { t: "Secretaría de Industria y Comercio · Registro Nacional de Parques Industriales (RENPI), con la base descargable", u: "https://datos.gob.ar/dataset/registro-nacional-de-parques-industriales-renpi" };
+const F_ENERGIA = { t: "Secretaría de Energía · Transporte eléctrico de alta tensión: estaciones transformadoras (datos.gob.ar; potencia instalada, no disponible)", u: "https://datos.gob.ar/dataset/transporte-electrico-at-estaciones-transformadoras" };
+const F_OPEX = { t: "INDEC · Origen provincial de las exportaciones (informe con anexo de cuadros)", u: "https://www.indec.gob.ar/uploads/informesdeprensa/opex_03_26929F77A2CA.pdf" };
+const F_INDEC_CE = { t: "INDEC · Comercio exterior (estadísticas y publicaciones)", u: "https://www.indec.gob.ar/indec/web/Nivel3-Tema-3-2" };
+const F_MIC = { t: "Mapa de Inteligencia Competitiva de Paraguay (el modelo que sigue esta versión)", u: "https://www.mic.gov.py/mapamic/" };
+const FUENTES = {
+  A: [F_CENSO, F_CODIGOS, F_RADIOS, F_IGN, F_MIC],
+  B: [F_IGN],
+  C: [F_ENERGIA, F_IGN],
+  D: [F_IGN],
+  E: [F_IGN],
+  F: [F_IGN, F_SENADO, F_RENPI],
+  G: [F_IGN],
+  H: [F_ARCA, F_ARCA_MAN, F_ARCA_COD, F_IGN],
+  I: [F_OPEX, F_INDEC_CE],
+};
 
 /* ---------- estado ---------- */
 const est = {
@@ -271,8 +317,17 @@ async function cambiarTab(id, inicial) {
   $("#tituloMapa").textContent = t.titulo;
   $("#notaMapa").textContent = t.nota;
   $("#seccionProvincias").hidden = true; // lo reemplaza el gráfico A2
+  dibujarFuentes(t);
   armarSelectorCapas(t);
   await aplicar(true);
+}
+
+function dibujarFuentes(t) {
+  const el = $("#fuentesPantalla");
+  if (!el) return;
+  const lista = FUENTES[t.id] || [];
+  $("#listaFuentes").innerHTML = lista.map(f => `<li>${f.u ? `<a href="${esc(f.u)}" target="_blank" rel="noopener noreferrer">${esc(f.t)}</a>` : esc(f.t)}</li>`).join("");
+  el.hidden = !lista.length;
 }
 
 function armarSelectorCapas(t) {
@@ -388,6 +443,7 @@ function filtrar() {
 /* ---------- aplicar filtros / redibujar ---------- */
 async function aplicar(reencuadrar, conFiltro) {
   est.vis = filtrar();
+  if (est.tab === "H" && !est.adu) { try { est.adu = await json("aduanas_comercio.json"); } catch (e) { /* se muestra sin datos de aduanas */ } }
   const activos = Object.values(est.f).filter(Boolean).length;
   $("#contFiltros").hidden = !activos;
   $("#contFiltros").textContent = activos;
@@ -490,14 +546,32 @@ function irA(m) {
   popup.setLatLng([m.la, m.lo]).setContent(popupMuni(m)).openOn(mapa);
 }
 
+/* escala de color de los círculos en la pantalla A: habitantes (cortes fijos) o el indicador elegido (cortes por quintiles de la selección) */
+function escalaMapa() {
+  const k = est.metrica, met = METRICAS[k];
+  if (k === "pob") return { k, titulo: "Habitantes", cortes: CORTES_POB, et: ["Menos de 2.000", "2.000 a 10.000", "10.000 a 50.000", "50.000 a 200.000", "Más de 200.000"] };
+  const v = est.vis.map(m => m[k]).filter(x => x != null).sort((a, b) => a - b);
+  const cortes = [0.2, 0.4, 0.6, 0.8].map(q => (v.length ? v[Math.floor(q * (v.length - 1))] : 0));
+  const f = x => (met.dec ? fmt1(x) : fmt(x));
+  return { k, titulo: met.l + (met.u ? " (" + met.u.trim() + ")" : ""), cortes,
+    et: [`Menos de ${f(cortes[0])}`, `${f(cortes[0])} a ${f(cortes[1])}`, `${f(cortes[1])} a ${f(cortes[2])}`, `${f(cortes[2])} a ${f(cortes[3])}`, `${f(cortes[3])} o más`] };
+}
+function htmlRampa(t) {
+  if (!t.coropleta) return "";
+  const e = escalaMapa();
+  return `<p class="rotulo">${esc(e.titulo)}</p>` + RAMPA.map((c, i) => `<span class="leg"><i style="background:${c}"></i>${esc(e.et[i])}</span>`).join("") + `<span class="leg"><i style="background:#b8bcc4"></i>Sin dato</span>`;
+}
+
 function dibujarMunis(t) {
   grupoMunis.clearLayers();
   const colorear = t.coropleta;
+  const esc_ = colorear ? escalaMapa() : null;
   const orden = [...est.vis].sort((a, b) => (b.pob || 0) - (a.pob || 0)); // los grandes abajo, los chicos arriba
   for (const m of orden) {
     let r, col, borde, op;
     if (colorear) {
-      const c = m.pob == null ? -1 : claseDe(m.pob, CORTES_POB);
+      const val = m[esc_.k];
+      const c = val == null ? -1 : claseDe(val, esc_.cortes);
       r = m.pob == null ? 3 : Math.min(20, Math.max(3, Math.sqrt(m.pob) / 55));
       col = c < 0 ? "#b8bcc4" : RAMPA[c];
       borde = "#0b1d3a"; op = 0.85;
@@ -518,10 +592,10 @@ function dibujarProvincias(t) {
   const cortes = [0.2, 0.4, 0.6, 0.8].map(q => pobs[Math.floor(q * (pobs.length - 1))]);
   for (const p of est.prov) {
     const r = porCod[p.c];
-    const fill = t.coropleta && r ? RAMPA[claseDe(r.pob, cortes)] : "#fffefb";
+    const fill = t.coropleta && est.metrica === "pob" && r ? RAMPA[claseDe(r.pob, cortes)] : "#fffefb";
     const sel = est.f.prov && r && r.pv === est.f.prov;
     const poly = L.polygon(p.r.map(anillo => anillo.map(([x, y]) => [y, x])), {
-      renderer: paneles.prov, pane: "prov", color: sel ? "#9b2c22" : "#46567a", weight: sel ? 2.2 : 0.8, fillColor: fill, fillOpacity: t.coropleta ? 0.45 : 0.05,
+      renderer: paneles.prov, pane: "prov", color: sel ? "#9b2c22" : "#46567a", weight: sel ? 2.2 : 0.8, fillColor: fill, fillOpacity: t.coropleta && est.metrica === "pob" ? 0.45 : 0.05,
     });
     poly.on("click", e => {
       if (!r) return;
@@ -548,7 +622,16 @@ async function dibujarCapas() {
       iconCreateFunction: c => L.divIcon({ html: `<span>${c.getChildCount()}</span>`, className: "cluster-neeti", iconSize: [34, 34] }),
     }) : L.layerGroup();
     const lote = [];
-    if (def.t === "lineas") {
+    if (def.t === "aduanas") {
+      const ok = pcsPermitidos();
+      const lista = datos.aduanas.filter(a => !ok || ok.has(a.pc));
+      const max = Math.max(...lista.map(a => a.imp + a.exp), 1);
+      for (const a of lista) {
+        const mk = L.circleMarker([a.la, a.lo], { renderer: paneles.puntos, pane: "puntos", radius: 5 + 20 * Math.sqrt((a.imp + a.exp) / max), color: "#ffffff", weight: 1, fillColor: a.zf ? "#c4892b" : def.c, fillOpacity: 0.62 });
+        mk.on("click", () => popup.setLatLng([a.la, a.lo]).setContent(`<div class="pop"><b>${esc(a.n)}</b><small>${a.zf ? "Zona franca" : "Aduana"}${a.ap ? " · ubicación aproximada" : ""}</small><br>Importaciones ${mill(a.imp / 1e6)}<br>Exportaciones ${mill(a.exp / 1e6)}<br><button type="button" data-adu="${a.c}">Ver detalle</button></div>`).openOn(mapa));
+        g.addLayer(mk);
+      }
+    } else if (def.t === "lineas") {
       g.addLayer(L.polyline(datos.map(l => l.map(([x, y]) => [y, x])), { renderer: paneles.lineas, pane: "lineas", color: def.c, weight: def.w, opacity: 0.85, dashArray: def.dash || null, interactive: false, smoothFactor: 1.2 }));
     } else {
       for (const p of datos) {
@@ -569,8 +652,8 @@ async function dibujarCapas() {
 function dibujarLeyenda(t) {
   const el = $("#leyenda");
   if (t.coropleta) {
-    const et = ["Menos de 2.000", "2.000 a 10.000", "10.000 a 50.000", "50.000 a 200.000", "Más de 200.000"];
-    el.innerHTML = "<b>Habitantes</b><br>" + RAMPA.map((c, i) => `<i style="background:${c}"></i>${et[i]}`).join("<br>") + `<br><i style="background:#b8bcc4"></i>Sin dato`;
+    const e = escalaMapa();
+    el.innerHTML = `<b>${esc(e.titulo)}</b><br>` + RAMPA.map((c, i) => `<i style="background:${c}"></i>${esc(e.et[i])}`).join("<br>") + `<br><i style="background:#b8bcc4"></i>Sin dato`;
   } else {
     el.innerHTML = "";
   }
@@ -587,13 +670,16 @@ function dibujarRanking() {
     : esc(met.l);
   $("#tituloRanking").innerHTML = `Gobiernos locales · ${sel}`;
   const s = $("#selMetrica");
-  if (s) s.addEventListener("change", e => { est.metrica = e.target.value; est.orden = METRICAS[est.metrica].dir; est.nRank = 15; dibujarRanking(); });
+  if (s) s.addEventListener("change", e => {
+    est.metrica = e.target.value; est.orden = METRICAS[est.metrica].dir; est.nRank = 15; dibujarRanking();
+    if (t.coropleta) { dibujarMunis(t); dibujarProvincias(t); dibujarLeyenda(t); armarPanelCapas(t); }
+  });
 
   $("#btnOrden").hidden = false;
   $("#btnOrden").textContent = est.orden === "desc" ? "De mayor a menor" : "De menor a mayor";
   const ver = filas.slice(0, est.nRank);
   $("#ranking").innerHTML = ver.length
-    ? ver.map((m, i) => `<li><button type="button" data-ir="${m.c}"><span class="pos">${i + 1}</span><span class="nom">${esc(m.n)}<small>${esc(m.pv)}${est.metrica !== "pob" && m.pob != null ? " · " + fmt(m.pob) + " hab." : ""}</small></span><span class="val">${fmt(m[est.metrica])}${met.u}</span></button></li>`).join("")
+    ? ver.map((m, i) => `<li><button type="button" data-ir="${m.c}"><span class="pos">${i + 1}</span><span class="nom">${esc(m.n)}<small>${esc(m.pv)}${est.metrica !== "pob" && m.pob != null ? " · " + fmt(m.pob) + " hab." : ""}</small></span><span class="val">${(met.dec ? fmt1 : fmt)(m[est.metrica])}${met.u}</span></button></li>`).join("")
     : `<li class="nota">No hay gobiernos locales con estos filtros.</li>`;
   $("#btnMasRanking").hidden = filas.length <= est.nRank;
   $("#btnMasRanking").textContent = `Ver más (${fmt(filas.length - est.nRank)} restantes)`;
@@ -644,6 +730,14 @@ function abrirFicha(m) {
       ${dato("Habitantes por vivienda", m.pob != null && m.viv ? fmt1(m.pob / m.viv) : "—")}
       ${dato("Código INDEC", esc(m.c))}
     </dl>
+    <h4>Población y trabajo</h4>
+    <dl>
+      ${dato("Edad mediana", m.em != null ? m.em + " años" : "Sin dato")}
+      ${dato("Población económicamente activa", m.pea != null ? fmt(m.pea) : "Sin dato")}
+      ${dato("Tasa de actividad", m.pea_t != null ? fmt1(m.pea_t) + " %" : "Sin dato")}
+      ${dato("Desocupación", m.des_t != null ? fmt1(m.des_t) + " %" : "Sin dato")}
+    </dl>
+    <p class="nota" style="padding:0">${origenDemografico(m)}</p>
     <h4>Distancia a las grandes ciudades</h4>
     <dl>${dato("Buenos Aires", km(m.d_ba))}${dato("Córdoba", km(m.d_cor))}${dato("Rosario", km(m.d_ros))}</dl>
     <h4>Transporte y logística</h4>
@@ -655,7 +749,9 @@ function abrirFicha(m) {
       ${dato("Paso de frontera más cercano", `${km(m.d_paso)}<br><small>${esc(m.paso)}</small>`)}
     </dl>
     <h4>Energía</h4>
-    <dl>${dato("Central eléctrica más cercana", km(m.d_central))}${dato("Planta transformadora más cercana", km(m.d_transf))}</dl>
+    <dl>${dato("Estación de alta tensión más cercana", `${km(m.d_at)}<br><small>${esc(m.at)}</small>`)}${dato("Central eléctrica más cercana", km(m.d_central))}${dato("Planta transformadora más cercana (IGN)", km(m.d_transf))}</dl>
+    <h4>Industria</h4>
+    <dl>${dato("Parque industrial más cercano", `${km(m.d_parque)}<br><small>${esc(m.parque)}</small>`)}${dato("Parques industriales a ≤30 km", fmt(m.parq30))}</dl>
     <h4>Servicios en el entorno</h4>
     <dl>${dato("Establecimientos de salud a ≤10 km", fmt(m.salud10))}${dato("Fábricas a ≤20 km", fmt(m.fab20))}${dato("Estaciones de servicio a ≤10 km", fmt(m.est10))}</dl>
     <p class="nota" style="padding:0">Distancias en línea recta desde el punto que el IGN asigna al gobierno local.</p>`;
@@ -664,6 +760,13 @@ function abrirFicha(m) {
   d.scrollTop = 0;
 }
 $("#ficha").addEventListener("click", e => { if (e.target === $("#ficha")) $("#ficha").close(); });
+
+function origenDemografico(m) {
+  if (m.fx === "radios") return `Calculado con el Censo 2022 por radio censal${m.comp > 0 ? ` (el ${fmt1(m.comp)} % de la población está en radios compartidos con otro gobierno local y se repartió según las viviendas)` : ""}.`;
+  if (m.fx === "oficial") return "Dato oficial del INDEC para toda la Ciudad Autónoma de Buenos Aires.";
+  if (m.fx === "dpto") return `Sin dato propio: son valores del departamento ${esc(m.dpn || "")} (el cuadro por radios no incluye este gobierno local).`;
+  return "";
+}
 
 /* ---------- pie ---------- */
 function pieCobertura() {
@@ -794,6 +897,38 @@ function abrirFichaComercio(pv, silencioso) {
   if (!dlg.open && !silencioso) dlg.showModal();
   dlg.scrollTop = 0;
 }
+
+function abrirFichaAduana(cod) {
+  const a = est.adu && est.adu.aduanas.find(x => x.c === cod);
+  if (!a) return;
+  mapa.closePopup();
+  const M = v => "US$ " + Math.round(v / 1e6).toLocaleString("es-AR") + " M";
+  const lista = (titulo, filas) => filas.length ? `<h4>${titulo}</h4>${filas.map(([n, v]) => barraMini(n, v, filas[0][1], M(v))).join("")}` : "";
+  const meses = est.adu.meses.map((k, i) => [k.slice(4) + "/" + k.slice(2, 4), a.mes_i[i], a.mes_e[i]]);
+  const maxM = Math.max(...meses.map(x => Math.max(x[1], x[2])), 1);
+  $("#fichaCuerpo").className = "ficha-cuerpo";
+  $("#fichaCuerpo").innerHTML = `
+    <h3>${esc(a.n)}</h3>
+    <p class="sub">${a.zf ? "Zona franca" : "Aduana"} · ARCA · ${est.adu.desde.slice(4)}/${est.adu.desde.slice(0, 4)} a ${est.adu.hasta.slice(4)}/${est.adu.hasta.slice(0, 4)}</p>
+    <dl>
+      <div><dt>Importaciones</dt><dd>${M(a.imp)}</dd></div>
+      <div><dt>Exportaciones registradas</dt><dd>${M(a.exp)}</dd></div>
+      <div><dt>Ítems importados</dt><dd>${fmt(a.items)}</dd></div>
+      <div><dt>Medio principal (import. / export.)</dt><dd>${esc(a.medio_i || "—")} / ${esc(a.medio_e || "—")}</dd></div>
+    </dl>
+    ${lista("Qué importa", a.cap_i)}${lista("De dónde importa", a.pais_i)}
+    ${lista("Qué exporta", a.cap_e)}${lista("A dónde exporta", a.pais_e)}
+    <h4>Mes a mes (millones de US$)</h4>
+    ${meses.map(([k, i, e]) => barraMini(k, i, maxM, `import. ${Math.round(i / 1e6).toLocaleString("es-AR")} · export. ${Math.round(e / 1e6).toLocaleString("es-AR")}`)).join("")}
+    <p class="nota" style="padding:8px 0 0">Es la aduana donde se registró la operación, no el lugar por donde pasó la mercadería${a.ap ? "; la ubicación en el mapa es aproximada (zona metropolitana)" : ""}. Las exportaciones salen del archivo agregado de ARCA, que reserva parte de los datos por secreto estadístico.</p>`;
+  const dlg = $("#ficha");
+  if (!dlg.open) dlg.showModal();
+  dlg.scrollTop = 0;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-adu]");
+  if (b) abrirFichaAduana(b.dataset.adu);
+});
 
 window.addEventListener("hashchange", () => {
   const h = (location.hash || "").replace("#", "").toUpperCase();

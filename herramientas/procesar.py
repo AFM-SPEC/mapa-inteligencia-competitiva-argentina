@@ -167,15 +167,23 @@ for fol in _doc.findall("k:Folder", _ns):
     for pm in fol.findall("k:Placemark", _ns):
         d = _datos(pm)
         la_, lo_ = _num(d.get("Latitud")), _num(d.get("Longitud"))
-        if la_ is None or lo_ is None:
-            continue
         nom = (pm.find("k:name", _ns).text or "").strip()
         if nombre_fol == "ZONAS FRANCAS":
-            zfrancas.append([round(la_, 4), round(lo_, 4), nom, d.get("Provincia", "")])
-        else:
-            emp = _num(d.get("Cantidad de empresas establecidas"))
-            parques.append([round(la_, 4), round(lo_, 4), nom, d.get("Tipo", ""), d.get("Condicion", ""), d.get("Provincia", ""),
-                            int(emp) if emp is not None else None, _num(d.get("Superficie Has.")), d.get("Origen", "")])
+            # las zonas francas no traen latitud/longitud en los campos: la ubicación sale de la geometría Point
+            xy = pm.find(".//k:Point/k:coordinates", _ns)
+            if xy is None:
+                continue
+            lo_, la_ = [float(v) for v in xy.text.strip().split(",")[:2]]
+            desc = (pm.find("k:description", _ns).text or "").split("<br>")
+            norma = desc[0].strip()
+            vig = desc[1].replace("vigencia:", "").strip() if len(desc) > 1 else ""
+            zfrancas.append([round(la_, 4), round(lo_, 4), nom, norma, vig])
+            continue
+        if la_ is None or lo_ is None:
+            continue
+        emp = _num(d.get("Cantidad de empresas establecidas"))
+        parques.append([round(la_, 4), round(lo_, 4), nom, d.get("Tipo", ""), d.get("Condicion", ""), d.get("Provincia", ""),
+                        int(emp) if emp is not None else None, _num(d.get("Superficie Has.")), d.get("Origen", "")])
 capas["parques"] = parques
 capas["zonas_francas"] = zfrancas
 capas["pesaje"] = puntos_de(cargar("capa_pesaje.json"))

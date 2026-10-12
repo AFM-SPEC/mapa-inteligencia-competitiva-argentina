@@ -13,14 +13,20 @@ Cada una tiene filtros, indicadores, mapa con panel de capas y leyenda, gráfico
 - Ubicación de los gobiernos locales y capas (rutas, ferrocarril, energía, ductos, yacimientos, salud, fábricas, universidades, puertos, aeropuertos, peajes, pasos de frontera, aduanas, áreas protegidas): IGN, servicio WFS de Capas SIG.
 - Exportaciones por provincia, rubro y destino: INDEC, «Origen provincial de las exportaciones» (anexo de cuadros del primer semestre de 2025 y serie anual hasta 2024).
 
-## Qué falta respecto del original de Paraguay (y por qué)
-- **Edad mediana y población económicamente activa por municipio:** no hay dato abierto a ese nivel.
-- **Potencia disponible por subestación, distribuidores y operadores de combustibles, redes IPS/MSPBS, polos industriales y AFI:** son datos propios de Paraguay; en Argentina no hay equivalentes abiertos.
-- **Importaciones y exportaciones por aduana:** no se publican en forma abierta por aduana; el IGN sólo registra 10 aduanas.
-- **Parques industriales:** no hay un listado nacional abierto con ubicación.
+## Qué se agregó para parecerse al original de Paraguay
+- **Edad mediana y población económicamente activa por gobierno local:** calculadas con el Censo 2022 por radio censal (INDEC). Validadas contra el dato oficial por departamento (edad mediana: 510 de 512 coinciden, 2 difieren en un año; población activa: coincide exacta). 186 gobiernos locales sin dato propio muestran el de su departamento, rotulado.
+- **Estaciones transformadoras de alta tensión (323):** Secretaría de Energía; potencia INSTALADA en MVA, no potencia disponible.
+- **Comercio exterior por aduana:** ARCA, 12 meses (octubre 2025 a septiembre 2026). Importaciones completas; exportaciones parciales por reserva estadística de ARCA (cerca del 45 % del total; se excluyeron renglones con errores de carga evidentes, documentados en `herramientas/procesar_aduanas.py` y `fuentes.html`).
+- **Parques industriales (606) y zonas francas (13):** mapa del Senado, 2024.
+- **Fuentes:** cada pantalla trae su bloque «Fuentes de esta pantalla» con enlaces; la página `fuentes.html` reúne el inventario, el método, las brechas y la priorización.
+
+## Qué sigue sin existir (y por qué)
+- **Potencia eléctrica DISPONIBLE por subestación:** no se halló publicada; habría que pedirla a CAMMESA, al ENRE (ENReGE) y a las transportistas.
+- **Exportaciones por aduana completas:** ARCA las reserva en parte.
+- **Parques industriales unificados:** falta cruzar con el RENPI (planilla de 2023 sin coordenadas) y con los registros provinciales.
+- **POUT:** concepto propio de Paraguay; no hay registro nacional abierto.
 - **Video de «Sobre el mapa»:** se reemplazó por una guía de tres pasos.
-- **«Tiene POUT»:** concepto propio de Paraguay.
-- **Datos de contacto y destino del formulario:** se completan en `docs/config.js`; mientras estén vacíos, la sección «Contacto» y el formulario no aparecen.
+- **Datos de contacto y destino del formulario:** se completan en `docs/config.js` (el correo de contacto es info@neetipol.com; sin destino de formulario).
 
 ## Límites que conviene saber
 - Distancias en línea recta, no por camino.
@@ -33,5 +39,5 @@ Cada una tiene filtros, indicadores, mapa con panel de capas y leyenda, gráfico
 
 ## Estructura
 - `docs/`: el sitio (se publica con GitHub Pages). `index.html`, `preguntas.html`, `estilo.css`, `app.js`, `widgets.js`, `comun.js`, `config.js` y `datos/` (datos ya procesados).
-- `herramientas/`: scripts de Python que procesan los datos originales (`procesar.py`, `procesar_comercio.py`).
+- `herramientas/`: scripts de Python que procesan los datos originales: `procesar.py` (base), `procesar_comercio.py`, `procesar_censo_dptos.py` y `integrar_radios.py` (censo), `procesar_radios.py` (radios censales), `procesar_energia.py`, `procesar_aduanas.py` y `armar_aduanas.py` (aduanas). Orden: `procesar.py`, `procesar_censo_dptos.py`, `integrar_radios.py`, `procesar_energia.py`.
 - `datos-origen/` (no se sube al repositorio por su tamaño): archivos descargados de las fuentes de arriba. Para regenerar `docs/datos/` hay que volver a bajarlos de esas fuentes y correr los dos scripts.

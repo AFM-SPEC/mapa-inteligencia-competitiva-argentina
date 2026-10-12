@@ -1,5 +1,17 @@
 # Misión: datos argentinos equivalentes al Mapa MIC de Paraguay
 
+**Estado al 12/10/2026 (tercera sesión): HECHO y publicado en el mapa.** Resumen de lo que quedó:
+- Edad mediana y PEA por gobierno local con radios censales (validado contra el INDEC por departamento), pantalla A, ficha y tabla.
+- Comercio exterior por aduana (ARCA, 12 meses, oct-2025 a sep-2026): `herramientas/procesar_aduanas.py` + `armar_aduanas.py` → `docs/datos/aduanas_comercio.json`; pantalla H. Se corrigió el conteo de importaciones (el archivo no viene ordenado: un ítem aparece en varios renglones) y se excluyen 3 renglones de exportación con errores de carga evidentes (ver `fuentes.html`).
+- Estaciones transformadoras de alta tensión (323, potencia INSTALADA): pantalla C.
+- Parques industriales (606) y zonas francas (13): pantalla F.
+- Cada pantalla tiene su bloque «Fuentes de esta pantalla» con enlaces comprobados; `docs/fuentes.html` reúne inventario, equivalencias, método, georreferenciación, brechas y priorización.
+
+**Todavía pendiente (brechas reales):** potencia DISPONIBLE por subestación (pedir a CAMMESA, ENRE/ENReGE y transportistas), exportaciones por aduana sin reserva estadística (ARCA), cruce de parques con RENPI y registros provinciales (Buenos Aires, Entre Ríos, Córdoba, Santa Fe, Mendoza…), POUT por provincia, enlace oficial del mapa de parques del Senado, avisar a ARCA de los renglones con errores.
+
+---
+## Notas históricas de la segunda sesión (referencia; lo hecho arriba reemplaza el «Orden sugerido»)
+
 Estado al 12/10/2026 (segunda sesión). Pedido del usuario: localizar, verificar y documentar fuentes argentinas para cinco capas del Mapa MIC (https://www.mic.gov.py/mapamic/):
 1. Edad mediana por municipio. 2. Población económicamente activa (PEA) por municipio. 3. Potencia eléctrica disponible por subestación. 4. Importaciones y exportaciones por aduana. 5. Parques industriales. (Más: POUT.)
 

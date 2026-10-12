@@ -334,3 +334,8 @@ html.contraste .leaflet-popup-content-wrapper { border: 1px solid #000; }
   .kpis { grid-template-columns: repeat(6, 1fr); }
   #mapa { height: 72vh; min-height: 560px; }
 }
+
+/* fuentes de cada pantalla */
+.fuentes-pantalla ul { margin: 0; padding: 4px 14px 4px 32px; display: grid; gap: 8px; font-size: var(--t-sm); line-height: 1.4; }
+.fuentes-pantalla a { color: var(--navy); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.fuentes-pantalla a:hover { color: var(--alta); }
