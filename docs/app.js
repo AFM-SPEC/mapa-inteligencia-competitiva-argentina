@@ -177,9 +177,9 @@ const TABS = [
   {
     id: "F", nombre: "F · Industrias", capas: ["parques", "zonas_francas", "fabricas", "universidades"], capasOff: ["universidades"], metricas: ["d_parque", "parq30", "fab20", "univ30"],
     titulo: "F1 · Parques industriales, zonas francas, fábricas y universidades",
-    nota: "Parques y áreas industriales según el mapa de la Comisión de Industria y Comercio del Senado (2024) y zonas francas; fábricas del IGN (un relevamiento cartográfico, no un registro de empresas). Un parque industrial no es un establecimiento individual.",
+    nota: "606 ubicaciones del mapa del Senado (2024), cruzadas con el RENPI (234 coincidencias por nombre y provincia) y el registro bonaerense (78 coincidencias). Siete registros bonaerenses siguen sin ubicar porque la fuente solo indica el municipio. Las marcas muestran las ubicaciones del Senado; fábricas del IGN (un relevamiento cartográfico, no un registro de empresas).",
     kpis: v => [
-      ["Parques y áreas industriales", "606", "mapa del Senado, 2024"],
+      ["Parques ubicados", "606", "mapa del Senado, 2024"],
       ["Zonas francas", "13", "todo el país"],
       ["Con un parque a ≤30 km", fmt(cuenta(v, m => m.parq30 > 0)), pct(cuenta(v, m => m.parq30 > 0), v.length)],
       ["Fábricas registradas", "2.226", "IGN, todo el país"],
@@ -237,8 +237,10 @@ const F_RADIOS = { t: "INDEC · Censo 2022 por radio censal, un archivo por prov
 const F_ARCA = { t: "ARCA · Información de comercio exterior (archivos mensuales por aduana, octubre 2025 a septiembre 2026)", u: "https://www.arca.gob.ar/operadoresComercioExterior/informacionAgregada/informacion-agregada.asp" };
 const F_ARCA_MAN = { t: "ARCA · Manual de descarga y lectura de los archivos de comercio exterior", u: "https://www.arca.gob.ar/operadoresComercioExterior/documentos/Procedimiento-descarga-y-lectura-archivos-de-ComExAFIP-2018.pdf" };
 const F_ARCA_COD = { t: "ARCA · Códigos de aduanas y de países (anexo de la RG 1452)", u: "https://www.arca.gob.ar/Aplicativos/oProgramasAduaneros/prestadores/rg1452.zip" };
-const F_SENADO = { t: "Mapa de Parques Industriales de la Argentina · Comisión de Industria y Comercio del Senado de la Nación (archivo del 24/06/2024; sin enlace directo comprobado)" };
+const F_SENADO = { t: "Mapa de Parques Industriales de la Argentina · Comisión de Industria y Comercio del Senado (archivo del 24/06/2024; copia local de datos-origen/parques.kml)" };
 const F_RENPI = { t: "Secretaría de Industria y Comercio · Registro Nacional de Parques Industriales (RENPI), con la base descargable", u: "https://datos.gob.ar/dataset/registro-nacional-de-parques-industriales-renpi" };
+const F_BA_PARQUES = { t: "Provincia de Buenos Aires · Agrupamientos industriales aprobados por decreto (CSV; nombre y municipio, sin coordenadas)", u: "https://catalogo.datos.gba.gob.ar/dataset/348dddc1-9578-4fad-9349-6b8bb72630dc/resource/0945236f-6aea-4ff3-8899-41c347c2b0f9/download/agrupamientos-industriales-aprobados-por-decreto-2026.csv" };
+const F_SF_PARQUES = { t: "Santa Fe · Parques y áreas industriales, capa geográfica del geoportal IDESF", u: "https://aswe.santafe.gov.ar/idesf/wms?service=WMS&request=GetCapabilities" };
 const F_ENERGIA = { t: "Secretaría de Energía · Transporte eléctrico de alta tensión: estaciones transformadoras (datos.gob.ar; potencia instalada, no disponible)", u: "https://datos.gob.ar/dataset/transporte-electrico-at-estaciones-transformadoras" };
 const F_OPEX = { t: "INDEC · Origen provincial de las exportaciones (informe con anexo de cuadros)", u: "https://www.indec.gob.ar/uploads/informesdeprensa/opex_03_26929F77A2CA.pdf" };
 const F_INDEC_CE = { t: "INDEC · Comercio exterior (estadísticas y publicaciones)", u: "https://www.indec.gob.ar/indec/web/Nivel3-Tema-3-2" };
@@ -249,7 +251,7 @@ const FUENTES = {
   C: [F_ENERGIA, F_IGN],
   D: [F_IGN],
   E: [F_IGN],
-  F: [F_IGN, F_SENADO, F_RENPI],
+  F: [F_IGN, F_SENADO, F_RENPI, F_BA_PARQUES, F_SF_PARQUES],
   G: [F_IGN],
   H: [F_ARCA, F_ARCA_MAN, F_ARCA_COD, F_IGN],
   I: [F_OPEX, F_INDEC_CE],

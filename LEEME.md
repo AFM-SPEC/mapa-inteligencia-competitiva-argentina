@@ -17,13 +17,13 @@ Cada una tiene filtros, indicadores, mapa con panel de capas y leyenda, gráfico
 - **Edad mediana y población económicamente activa por gobierno local:** calculadas con el Censo 2022 por radio censal (INDEC). Validadas contra el dato oficial por departamento (edad mediana: 510 de 512 coinciden, 2 difieren en un año; población activa: coincide exacta). 186 gobiernos locales sin dato propio muestran el de su departamento, rotulado.
 - **Estaciones transformadoras de alta tensión (323):** Secretaría de Energía; potencia INSTALADA en MVA, no potencia disponible.
 - **Comercio exterior por aduana:** ARCA, 12 meses (octubre 2025 a septiembre 2026). Importaciones completas; exportaciones parciales por reserva estadística de ARCA (cerca del 45 % del total; se excluyeron renglones con errores de carga evidentes, documentados en `herramientas/procesar_aduanas.py` y `fuentes.html`).
-- **Parques industriales (606) y zonas francas (13):** mapa del Senado, 2024.
+- **Parques industriales (606 ubicados) y zonas francas (13):** ubicaciones del Senado (2024), cruzadas por nombre y provincia con 234 registros del RENPI (2023) y 78 del registro bonaerense. Siete registros bonaerenses quedan sin ubicación exacta.
 - **Fuentes:** cada pantalla trae su bloque «Fuentes de esta pantalla» con enlaces; la página `fuentes.html` reúne el inventario, el método, las brechas y la priorización.
 
 ## Qué sigue sin existir (y por qué)
 - **Potencia eléctrica DISPONIBLE por subestación:** no se halló publicada; habría que pedirla a CAMMESA, al ENRE (ENReGE) y a las transportistas.
 - **Exportaciones por aduana completas:** ARCA las reserva en parte.
-- **Parques industriales unificados:** falta cruzar con el RENPI (planilla de 2023 sin coordenadas) y con los registros provinciales.
+- **Parques industriales:** cruce parcial disponible; falta geolocalizar siete registros bonaerenses y sumar datos descargables de otras provincias.
 - **POUT:** concepto propio de Paraguay; no hay registro nacional abierto.
 - **Video de «Sobre el mapa»:** se reemplazó por una guía de tres pasos.
 - **Datos de contacto y destino del formulario:** se completan en `docs/config.js` (el correo de contacto es info@neetipol.com; sin destino de formulario).
