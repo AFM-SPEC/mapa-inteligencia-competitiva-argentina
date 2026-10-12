@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
-<link rel="stylesheet" href="estilo.css?v=22">
+<link rel="stylesheet" href="estilo.css?v=26">
 </head>
 <body>
 <a class="saltar" href="#principal">Ir al contenido principal</a>
@@ -63,11 +63,21 @@
       <p>La plataforma integra datos del INDEC (Censo 2022 y exportaciones por provincia) y del Instituto Geográfico Nacional. Es una herramienta de análisis preliminar: no reemplaza los estudios técnicos, ambientales y legales que cada proyecto necesita.</p>
       <p><a class="boton boton-principal" href="preguntas.html">Preguntas frecuentes</a></p>
     </div>
+    <div class="sobre-lado">
+    <figure class="video-guia">
+      <video controls playsinline preload="metadata" poster="assets/video-guia-portada.jpg" width="390" height="844" aria-label="Video guía: cómo usar el mapa, 70 segundos, con subtítulos">
+        <source src="assets/video-guia.mp4" type="video/mp4">
+        <track kind="subtitles" src="assets/video-guia.vtt" srclang="es" label="Texto de los subtítulos">
+        Tu navegador no puede reproducir el video. Los pasos están escritos al lado.
+      </video>
+      <figcaption>Video guía · 70 segundos, con subtítulos</figcaption>
+    </figure>
     <ol class="pasos" aria-label="Cómo usar el mapa">
       <li><b>Elegí una sección.</b> Las pestañas A a I cambian las capas y los indicadores.</li>
       <li><b>Filtrá.</b> Por provincia, región, tamaño del gobierno local o distancia a las grandes ciudades.</li>
       <li><b>Tocá un círculo o un nombre de la lista.</b> Se abre la ficha con población, distancias y servicios cercanos.</li>
     </ol>
+    </div>
   </section>
 
   <section class="mapa-seccion" id="mapa-seccion" aria-labelledby="hMapa">

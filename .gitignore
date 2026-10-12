@@ -1,3 +1,4 @@
 .DS_Store
 datos-origen/
 __pycache__/
+herramientas/video/tmp/

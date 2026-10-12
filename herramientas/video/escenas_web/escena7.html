@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Escena 7 · Cierre y Alcance</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: #0b1d3a;
+    color: #fff8dc;
+    font-family: 'Libre Franklin', sans-serif;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3.5rem 1.5rem 4rem 1.5rem;
+  }
+
+  canvas#fondo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    opacity: 0.35;
+  }
+
+  .contenido {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .logo-box {
+    margin-bottom: 1.2rem;
+    animation: fadeInDown 1s ease-out forwards;
+  }
+  .logo-box img {
+    height: 42px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+  }
+
+  h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #ffffff;
+    margin-bottom: 1.2rem;
+    animation: fadeInUp 1.2s ease-out forwards;
+  }
+
+  .tarjeta-aviso {
+    background: rgba(11, 29, 58, 0.9);
+    border: 1.5px solid rgba(255, 248, 220, 0.35);
+    border-radius: 14px;
+    padding: 1.2rem 1.1rem;
+    text-align: left;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    animation: fadeInUp 1.5s ease-out forwards;
+  }
+
+  .tarjeta-aviso .icono-rotulo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #ffd875;
+    margin-bottom: 0.6rem;
+  }
+
+  .tarjeta-aviso p {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: #f1ebd6;
+  }
+
+  .url-sitio {
+    margin-top: 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ffd875;
+    letter-spacing: 0.02em;
+    animation: fadeIn 1.8s ease-out forwards;
+  }
+
+  /* Subtítulo grande inferior */
+  .subtitulo-contenedor {
+    position: relative;
+    z-index: 20;
+    width: 100%;
+    max-width: 370px;
+    animation: fadeIn 1.8s ease-out forwards;
+  }
+
+  .subtitulo-barra {
+    background: rgba(6, 17, 34, 0.94);
+    border: 1.5px solid rgba(255, 248, 220, 0.4);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  }
+
+  .subtitulo-texto {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #fff8dc;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="fondo"></canvas>
+
+<div class="contenido">
+  <div class="logo-box">
+    <img src="../../../docs/assets/neeti-logo.png" alt="NEETI">
+  </div>
+  <h2>Planificación del territorio e inversión productiva</h2>
+  
+  <div class="tarjeta-aviso">
+    <div class="icono-rotulo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      Alcance del mapa
+    </div>
+    <p>Esta plataforma es una herramienta de <strong>análisis preliminar</strong>. No reemplaza los estudios técnicos, ambientales y legales que cada proyecto específico requiere.</p>
+  </div>
+
+  <div class="url-sitio">afm-spec.github.io/mapa-inteligencia-competitiva-argentina</div>
+</div>
+
+<script>
+  const canvas = document.getElementById('fondo');
+  const ctx = canvas.getContext('2d');
+  let w, h;
+  function resize() {
+    w = canvas.width = window.innerWidth * 2;
+    h = canvas.height = window.innerHeight * 2;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const puntos = [];
+  for (let i = 0; i < 90; i++) {
+    puntos.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 2 + 1,
+      pulso: Math.random() * Math.PI * 2,
+      v: 0.015 + Math.random() * 0.02
+    });
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(255, 248, 220, 0.05)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < puntos.length; i++) {
+      for (let j = i + 1; j < puntos.length; j++) {
+        const dx = puntos[i].x - puntos[j].x;
+        const dy = puntos[i].y - puntos[j].y;
+        if (Math.hypot(dx, dy) < w * 0.18) {
+          ctx.beginPath();
+          ctx.moveTo(puntos[i].x, puntos[i].y);
+          ctx.lineTo(puntos[j].x, puntos[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+    for (let p of puntos) {
+      p.pulso += p.v;
+      let alpha = 0.2 + 0.35 * Math.sin(p.pulso);
+      ctx.fillStyle = `rgba(255, 248, 220, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+</script>
+</body>
+</html>

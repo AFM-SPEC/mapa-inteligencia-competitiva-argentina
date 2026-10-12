@@ -25,7 +25,7 @@ Cada una tiene filtros, indicadores, mapa con panel de capas y leyenda, gráfico
 - **Exportaciones por aduana completas:** ARCA las reserva en parte.
 - **Parques industriales:** cruce parcial disponible; falta geolocalizar siete registros bonaerenses y sumar datos descargables de otras provincias.
 - **POUT:** concepto propio de Paraguay; no hay registro nacional abierto.
-- **Video de «Sobre el mapa»:** se reemplazó por una guía de tres pasos.
+- **Video de «Sobre el mapa»:** hay un video guía propio de 70 segundos (vertical, con subtítulos) junto a la guía de tres pasos; los scripts para rehacerlo están en `herramientas/video/`.
 - **Datos de contacto y destino del formulario:** se completan en `docs/config.js` (el correo de contacto es info@neetipol.com; sin destino de formulario).
 
 ## Límites que conviene saber

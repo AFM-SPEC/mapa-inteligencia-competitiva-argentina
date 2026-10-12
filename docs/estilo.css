@@ -339,3 +339,9 @@ html.contraste .leaflet-popup-content-wrapper { border: 1px solid #000; }
 .fuentes-pantalla ul { margin: 0; padding: 4px 14px 4px 32px; display: grid; gap: 8px; font-size: var(--t-sm); line-height: 1.4; }
 .fuentes-pantalla a { color: var(--navy); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
 .fuentes-pantalla a:hover { color: var(--alta); }
+
+/* video guía «Sobre el mapa»: vertical, primero celular */
+.video-guia { margin: 16px 0 0; }
+.video-guia video { display: block; width: 100%; max-width: 360px; height: auto; margin: 0 auto; border-radius: var(--radio); background: var(--navy); aspect-ratio: 390 / 844; }
+.video-guia figcaption { margin-top: 6px; text-align: center; color: var(--tinta-media); font-size: var(--t-sm); }
+@media (min-width: 900px) { .video-guia video { max-height: 70vh; width: auto; } }
