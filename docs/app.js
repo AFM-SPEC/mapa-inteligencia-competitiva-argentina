@@ -21,6 +21,48 @@ const TEXTOS_PANTALLAS = {
   aduanaNota: "En 11 meses comparables, ARCA IC+IG quedó 5,2 % por debajo del INDEC. ARCA informa valor FOB y el INDEC valor CIF, que incluye flete y seguro.",
 };
 
+/* Avisos breves por pantalla; mantener todos los textos aquí para traducirlos juntos. */
+const TEXTOS_AVISOS = {
+  titulo: "Datos que faltan",
+  A: [
+    "188 de 2.314 gobiernos locales no tienen datos propios de hombres y mujeres; se muestran como «sin dato propio».",
+    "A 51 gobiernos locales les falta población en el cuadro del Censo 2022 (sobre todo juntas de gobierno y comisiones de Entre Ríos y Formosa); otros 3 tienen población, pero no ubicación del IGN en el mapa.",
+    "En 186 gobiernos locales, la edad mediana y la población activa corresponden al departamento; está indicado en pantalla.",
+    "La suma de hombres y mujeres (45.618.787) no coincide con la población del cuadro (45.892.285).",
+  ],
+  B: [
+    "Las fronteras se miden de forma aproximada por país vecino. No se separan tramos por río y tramos terrestres ni hay una capa de ríos.",
+    "Unos 9.395 km de frontera no tienen país identificado en la fuente y no se suman.",
+    "Las longitudes de rutas siguen los trazados del IGN; autopistas y tramos paralelos pueden contarse más de una vez.",
+  ],
+  C: [
+    "Falta la potencia disponible de cada subestación, necesaria para saber si puede conectarse una industria. Solo hay potencia instalada (MVA, unidad sin confirmar) para 243 de 323 estaciones. Hay que pedir el dato a CAMMESA, al ENRE y a las transportistas.",
+    "Solo hay subestaciones descargables de Edenor y Edelap; faltan Edesur y las distribuidoras provinciales.",
+  ],
+  D: ["1.214 puntos vienen del IGN y no aparecen en el registro de Energía: no se confirmó su empresa ni su bandera."],
+  E: ["Solo se confirmó el cruce del 8,56 % de los 38.767 establecimientos de REFES y del 39,92 % de los puntos del IGN. El resto no muestra tipo ni origen. REFES tiene corte del 27/12/2024 y no informa complejidad."],
+  F: [
+    "Faltan parques industriales de varias provincias: siete registros bonaerenses no tienen ubicación exacta; la capa de Santa Fe no se pudo descargar; no se encontró una fuente abierta para Entre Ríos, Córdoba y Mendoza.",
+    "Argentina no tiene un registro de POUT (plan de ordenamiento urbano y territorial), concepto usado en Paraguay.",
+  ],
+  G: ["La cobertura de parques es parcial: siete registros bonaerenses no tienen ubicación exacta y faltan datos descargables de varias provincias."],
+  H: [
+    "Las exportaciones por aduana son parciales: ARCA reserva parte de los datos y se ve cerca del 45 % del total.",
+    "La comparación con INDEC llega hasta agosto de 2026. Septiembre se sumará cuando INDEC lo publique; está anunciado para el 19/10/2026.",
+    "Las fronteras se miden de forma aproximada por país vecino, sin separar río y tierra; unos 9.395 km sin país identificado no se suman.",
+  ],
+  I: ["Las exportaciones se informan por provincia de origen; no hay un desglose por gobierno local."],
+};
+
+function dibujarAviso(id) {
+  const aviso = $("#avisoDatos");
+  const puntos = TEXTOS_AVISOS[id] || [];
+  aviso.innerHTML = puntos.length
+    ? `<h3>${esc(TEXTOS_AVISOS.titulo)}</h3><ul>${puntos.map(p => `<li>${esc(p)}</li>`).join("")}</ul>`
+    : "";
+  aviso.hidden = !puntos.length;
+}
+
 /* ---------- catálogos ---------- */
 const TIPOS_GRUPOS = [
   { id: "mun", nombre: "Municipios", cods: ["MU", "M1", "M2", "M3"] },
@@ -344,6 +386,7 @@ async function cambiarTab(id, inicial) {
   est.activas = Object.fromEntries(t.capas.map(c => [c, !(t.capasOff || []).includes(c)]));
   $("#tituloMapa").textContent = t.titulo;
   $("#notaMapa").textContent = t.nota;
+  dibujarAviso(id);
   $("#seccionProvincias").hidden = true; // lo reemplaza el gráfico A2
   dibujarFuentes(t);
   armarSelectorCapas(t);

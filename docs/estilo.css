@@ -148,6 +148,13 @@ h1, h2, h3, h4 { margin: 0; }
 .panel-titulo select { max-width: 100%; min-height: 36px; margin-top: 4px; padding: 0 6px; border: 1px solid var(--linea-firme); border-radius: var(--radio); background: var(--papel); font-family: var(--sans); font-size: var(--t-ui); }
 .nota { margin: 0; padding: 8px 14px 12px; color: var(--tinta-media); font-size: var(--t-sm); }
 
+/* Aviso visible de cobertura, situado después del mapa para conservarlo a la vista en celular. */
+.aviso-datos { margin: 0 16px 16px; padding: 12px 14px 12px 16px; background: #fff8dc; border: 1px solid var(--media); border-left: 5px solid var(--alta); color: var(--tinta); }
+.aviso-datos[hidden] { display: none; }
+.aviso-datos h3 { margin: 0 0 6px; font-family: var(--sans); font-size: var(--t-base); font-weight: 600; line-height: 1.35; }
+.aviso-datos ul { margin: 0; padding-left: 1.15rem; font-size: var(--t-sm); line-height: 1.5; }
+.aviso-datos li + li { margin-top: 4px; }
+
 .capas { display: flex; gap: 6px; overflow-x: auto; padding: 8px 14px; scrollbar-width: none; }
 .capas[hidden] { display: none; }
 .capas::-webkit-scrollbar { display: none; }
@@ -317,6 +324,7 @@ html.contraste .leaflet-popup-content-wrapper { border: 1px solid #000; }
   .filtros-cuerpo { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 0; }
   .kpis { grid-template-columns: repeat(3, 1fr); margin: 12px 32px; }
   .panel { margin: 0 32px 16px; }
+  .aviso-datos { margin: 0 32px 16px; }
   #mapa { height: 68vh; min-height: 480px; }
   .estudios, .contacto { padding: 24px 32px 8px; }
   .lista-estudios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 24px; border-top: 0; }
