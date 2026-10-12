@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
-<link rel="stylesheet" href="estilo.css?v=26">
+<link rel="stylesheet" href="estilo.css?v=27">
 </head>
 <body>
 <a class="saltar" href="#principal">Ir al contenido principal</a>
@@ -178,12 +178,13 @@
         <label>CUIT<input name="cuit" inputmode="numeric" placeholder="XX-XXXXXXXX-X"></label>
         <fieldset>
           <legend>Quiero</legend>
-          <label class="opcion"><input type="checkbox" name="quiero" value="Registrar mi negocio para el mapa"> Registrar mi negocio para el mapa</label>
           <label class="opcion"><input type="checkbox" name="quiero" value="Recomendar corrección de datos"> Recomendar corrección de datos</label>
           <label class="opcion"><input type="checkbox" name="quiero" value="Dejar comentarios"> Dejar comentarios</label>
           <label class="opcion"><input type="checkbox" name="quiero" value="Otro"> Otro</label>
         </fieldset>
         <label>Descripción<textarea name="descripcion" rows="5"></textarea></label>
+        <input type="text" name="_honey" class="campo-trampa" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <input type="hidden" name="_subject" value="Comentarios sobre el mapa de inteligencia competitiva">
         <p class="estado-form" id="estadoForm" role="status"></p>
         <button type="submit" class="boton boton-principal">Enviar</button>
       </form>
@@ -237,7 +238,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="config.js"></script>
 <script src="comun.js"></script>
-<script src="widgets.js?v=24"></script>
-<script src="app.js?v=24"></script>
+<script src="widgets.js?v=25"></script>
+<script src="app.js?v=25"></script>
 </body>
 </html>

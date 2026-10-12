@@ -1,9 +1,10 @@
-# Resume por aduana los archivos mensuales de «Información de comercio exterior» de ARCA (importaciones y exportaciones).
+# Resume por aduana los archivos mensuales de «Información de comercio exterior» de ARCA (importaciones a consumo IC + IG y exportaciones).
 # Los importes salen del FOB en dólares de cada ítem (FOB_DOLAR), contado una sola vez; las exportaciones salen del archivo «agregado»,
 # que ARCA publica con reserva estadística (por eso suma menos que el total nacional).
 # Cada mes pesa ~160 MB comprimido y ~5,7 GB descomprimido: se lee directo del .zip, sin descomprimir en disco.
 # Uso:  python3 -I herramientas/procesar_aduanas.py AAAAMM [AAAAMM ...]
 #       python3 -I herramientas/procesar_aduanas.py --solo-exportaciones AAAAMM ...   (rehace sólo las exportaciones de meses ya procesados)
+#       python3 -I herramientas/procesar_aduanas.py --solo-importaciones AAAAMM ...  (rehace sólo las importaciones de meses ya procesados)
 #       (baja el zip de ARCA, lo resume en datos-origen/aduanas_mensual/AAAAMM.json y borra el zip)
 # Fuente: https://www.arca.gob.ar/operadoresComercioExterior/informacionAgregada/informacion-agregada.asp
 import json, os, subprocess, sys, zipfile
@@ -77,9 +78,17 @@ def redondear_tabla(tabla):
 
 
 def resumir(zip_ruta, mes):
-    imp = {}
     z = zipfile.ZipFile(zip_ruta)
     exp, tot_exp, excl = resumir_exportaciones(z, mes)
+    imp, imp_tipos = resumir_importaciones(z, mes)
+    redondear_tabla(imp)
+    redondear_tabla(imp_tipos)
+    redondear_tabla(exp)
+    return {"mes": mes, "imp": imp, "imp_tipos": imp_tipos, "exp": exp, "tot_exp": round(tot_exp, 2), "excluidos": excl}
+
+
+def resumir_importaciones(z, mes):
+    imp, imp_tipos = {}, {}
     # ---- importaciones (una fila por concepto arancelario de cada ítem: se cuenta una sola vez cada ítem)
     # El archivo NO está ordenado por trámite: el mismo ítem aparece en renglones separados, uno por concepto, así que se
     # guarda el identificador de cada ítem ya contado (aduana, destinación, número de ítem).
@@ -90,21 +99,41 @@ def resumir(zip_ruta, mes):
             c = linea.split(b"'")
             if len(c) < 15:
                 continue
-            clave = hash((c[0], c[1], c[2]))
+            clave = (c[0], c[1], c[2])
             if clave in vistos:
                 continue
             vistos.add(clave)
             adu = c[0].decode()
-            a = imp.setdefault(adu, {"usd": 0.0, "items": 0, "cap": {}, "pais": {}, "medio": {}})
+            destinacion = c[1].decode()
+            tipo = destinacion[5:7] if len(destinacion) >= 7 else "??"
             v = num(c[8])
-            a["usd"] += v
-            a["items"] += 1
-            suma(a["cap"], c[13].decode()[:2], v)
-            suma(a["pais"], c[11].decode(), v)
-            suma(a["medio"], c[5].decode(), v)
+            ta = imp_tipos.setdefault(adu, {}).setdefault(tipo, {"usd": 0.0, "items": 0})
+            ta["usd"] += v
+            ta["items"] += 1
+            if tipo in ("IC", "IG"):
+                a = imp.setdefault(adu, {"usd": 0.0, "items": 0, "cap": {}, "pais": {}, "medio": {}})
+                a["usd"] += v
+                a["items"] += 1
+                suma(a["cap"], c[13].decode()[:2], v)
+                suma(a["pais"], c[11].decode(), v)
+                suma(a["medio"], c[5].decode(), v)
+    return imp, imp_tipos
+
+
+def rehacer_importaciones(mes):
+    """Vuelve a calcular sólo las importaciones y conserva exportaciones y sus totales/exclusiones."""
+    zp = f"{TMP}/{mes}.zip"
+    if not os.path.exists(zp):
+        subprocess.run(["curl", "-sS", "-m", "900", "-L", "-A", "Mozilla/5.0", "-o", zp, URL.format(mes)], check=True)
+    imp, imp_tipos = resumir_importaciones(zipfile.ZipFile(zp), mes)
     redondear_tabla(imp)
-    redondear_tabla(exp)
-    return {"mes": mes, "imp": imp, "exp": exp, "tot_exp": round(tot_exp, 2), "excluidos": excl}
+    redondear_tabla(imp_tipos)
+    ruta = f"{CARPETA}/{mes}.json"
+    r = json.load(open(ruta, encoding="utf-8"))
+    r.update({"imp": imp, "imp_tipos": imp_tipos})
+    json.dump(r, open(ruta, "w", encoding="utf-8"), separators=(",", ":"))
+    os.remove(zp)
+    print(mes, "importaciones a consumo (IC + IG) rehechas:", len(imp), "aduanas; tipos:", sorted({t for a in imp_tipos.values() for t in a}), flush=True)
 
 
 def rehacer_exportaciones(mes):
@@ -126,6 +155,11 @@ if __name__ == "__main__":
     if sys.argv[1:2] == ["--solo-exportaciones"]:
         for mes in sys.argv[2:]:
             rehacer_exportaciones(mes)
+        sys.exit()
+    if sys.argv[1:2] == ["--solo-importaciones"]:
+        os.makedirs(TMP, exist_ok=True)
+        for mes in sys.argv[2:]:
+            rehacer_importaciones(mes)
         sys.exit()
     os.makedirs(CARPETA, exist_ok=True)
     os.makedirs(TMP, exist_ok=True)

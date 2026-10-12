@@ -345,3 +345,6 @@ html.contraste .leaflet-popup-content-wrapper { border: 1px solid #000; }
 .video-guia video { display: block; width: 100%; max-width: 360px; height: auto; margin: 0 auto; border-radius: var(--radio); background: var(--navy); aspect-ratio: 390 / 844; }
 .video-guia figcaption { margin-top: 6px; text-align: center; color: var(--tinta-media); font-size: var(--t-sm); }
 @media (min-width: 900px) { .video-guia video { max-height: 70vh; width: auto; } }
+
+/* Campo trampa del formulario: invisible para personas y disponible para filtros anti-spam. */
+.campo-trampa { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }

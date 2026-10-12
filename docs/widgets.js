@@ -1,4 +1,19 @@
 "use strict";
+
+/* Rótulos agregados para las pantallas nuevas; se pueden extraer para traducir. */
+const TEXTOS_WIDGETS = {
+  sexo: "A2 · Hombres y mujeres según sexo registrado al nacer (Censo 2022)",
+  rutasDepto: "B2 · Kilómetros de rutas por departamento", rutasFrontera: "B3 · Rutas que llegan a pasos de frontera", limitePais: "B4 · Kilómetros de límite por país vecino",
+  edenorEdelap: "C2f · Subestaciones de Edenor y Edelap", banderas: "D2b · Banderas más frecuentes en puntos de Energía",
+  refes: "E2 · Tipologías y origen de financiamiento en REFES", rutasInt: "Rutas que llegan a pasos de frontera",
+  impAduana: "H2 · Importaciones a consumo (IC + IG, valor FOB) por aduana",
+  queImporta: "H4 · Qué se importa a consumo (IC + IG, valor FOB; todo el país)", paisOrigen: "H5 · País de origen de las importaciones a consumo (IC + IG)",
+  colProvincia: "Provincia", colDepartamento: "Departamento", colNacionales: "Rutas nacionales (km)", colProvinciales: "Rutas provinciales (km)",
+  colRuta: "Ruta", colTipo: "Tipo", colLongitud: "Longitud (km)", colProvincias: "Provincias", colPasos: "Pasos próximos", colPaises: "Países",
+  colPaisVecino: "País vecino", colLimite: "Límite aproximado (km)", tipologia: "Tipología (todo REFES)", origen: "Origen de financiamiento (todo REFES)",
+  potenciaProvincia: "potencia instalada (MVA, unidad sin confirmar) en estaciones de alta tensión, por provincia",
+  importacionTabla: "H8 · Comercio exterior por aduana (importaciones IC + IG, US$ FOB)",
+};
 /* Gráficos, tablas, panel de capas, buscador del mapa y mapa mundial.
    Se carga después de app.js y usa sus datos (est, TABS, CAPAS, json, etc.). */
 
@@ -71,6 +86,12 @@ const barrasProv = async (capa, titulo) => W(titulo, async () => {
 
 const WIDGETS = {
   A: [
+    W(TEXTOS_WIDGETS.sexo, async () => {
+      const d = await json("departamentos_censo.json"); const por = {};
+      for (const x of d) { const pv = est.resumenProv.find(p => p.pc === x.c.slice(0, 2))?.pv; if (!pv) continue; const r = (por[pv] ||= { hom: 0, muj: 0 }); r.hom += x.hom || 0; r.muj += x.muj || 0; }
+      const totales = Object.values(por).reduce((a, x) => ({ hom: a.hom + x.hom, muj: a.muj + x.muj }), { hom: 0, muj: 0 });
+      return barrasHTML([{ n: "Hombres", v: totales.hom }, { n: "Mujeres", v: totales.muj }]) + `<p class="nota">${TEXTOS_PANTALLAS.notaSexo}</p>`;
+    }),
     W("A2 · Población por provincia", async () => {
       const por = {};
       for (const m of est.vis) por[m.pv] = (por[m.pv] || 0) + (m.pob || 0);
@@ -78,8 +99,8 @@ const WIDGETS = {
     }),
     W("A3 · Población según Censo 2022", async () => {
       const filas = [...est.vis].sort((a, b) => a.pv.localeCompare(b.pv, "es") || (b.pob || 0) - (a.pob || 0))
-        .map(m => [corto(m.pv), m.n, m.pob, m.em, m.pea, m.pea_t, m.d_ba, m.d_cor, m.d_ros, m.d_puerto]);
-      return tablaHTML("tA", [{ t: "Provincia" }, { t: "Gobierno local" }, { t: "Habitantes", num: 1 }, { t: "Edad mediana (años)", num: 1 }, { t: "Pobl. económicamente activa", num: 1 }, { t: "Tasa de actividad, 14 años y más (%)", num: 1, f: v => v.toLocaleString("es-AR", { maximumFractionDigits: 1 }) }, { t: "Dist. Buenos Aires (km)", num: 1 }, { t: "Dist. Córdoba (km)", num: 1 }, { t: "Dist. Rosario (km)", num: 1 }, { t: "Dist. al puerto más cercano (km)", num: 1 }], filas);
+        .map(m => [corto(m.pv), m.n, m.pob, m.hom ?? null, m.muj ?? null, m.em, m.pea, m.pea_t, m.pea != null && (m.pob_r || m.pob) ? 100 * m.pea / (m.pob_r || m.pob) : null, m.d_ba, m.d_cor, m.d_ros, m.d_puerto]);
+      return tablaHTML("tA", [{ t: "Provincia" }, { t: "Gobierno local" }, { t: "Habitantes", num: 1 }, { t: "Hombres", num: 1 }, { t: "Mujeres", num: 1 }, { t: "Edad mediana (años)", num: 1 }, { t: "Pobl. económicamente activa", num: 1 }, { t: TEXTOS_PANTALLAS.tasa14 + " (%)", num: 1, f: v => v.toLocaleString("es-AR", { maximumFractionDigits: 1 }) }, { t: TEXTOS_PANTALLAS.tasaTotal + " (%)", num: 1, f: v => v.toLocaleString("es-AR", { maximumFractionDigits: 1 }) }, { t: "Dist. Buenos Aires (km)", num: 1 }, { t: "Dist. Córdoba (km)", num: 1 }, { t: "Dist. Rosario (km)", num: 1 }, { t: "Dist. al puerto más cercano (km)", num: 1 }], filas);
     }),
     W("A4 · Población económicamente activa por provincia", async () => {
       const por = {};
@@ -95,6 +116,12 @@ const WIDGETS = {
     }),
   ],
   B: [
+    W(TEXTOS_WIDGETS.rutasDepto, async () => {
+      const r = await json("rutas_por_departamento.json"), ok = pcsPermitidos(), pv = pvDePc();
+      return tablaHTML("tBR", [{ t: "Provincia" }, { t: "Departamento" }, { t: "Rutas nacionales (km)", num: 1, f: fmt1 }, { t: "Rutas provinciales (km)", num: 1, f: fmt1 }], r.filter(x => !ok || ok.has(x.codigo.slice(0, 2))).map(x => [corto(pv[x.codigo.slice(0, 2)] || x.provincia), x.nombre, x.km_nacionales, x.km_provinciales]));
+    }),
+    W(TEXTOS_WIDGETS.rutasFrontera, async () => { const r = await json("rutas_internacionales.json"); return tablaHTML("tBI", [{ t: "Ruta" }, { t: "Tipo" }, { t: "Longitud (km)", num: 1, f: fmt1 }, { t: "Provincias" }, { t: "Pasos próximos" }, { t: "Países" }], r.map(x => [`${x.categoria === "nacional" ? "RN" : "RP"} ${x.ruta}`, x.categoria === "nacional" ? "Nacional" : "Provincial", x.km, x.provincias.join(", "), x.pasos.join(", "), x.paises.join(", ")])); }),
+    W(TEXTOS_WIDGETS.limitePais, async () => { const d = await json("limites_km.json"); return tablaHTML("tBL", [{ t: "País vecino" }, { t: "Límite aproximado (km)", num: 1, f: fmt1 }], d.paises.map(x => [x.pais, x.km_total])) + `<p class="nota">${TEXTOS_PANTALLAS.limite}</p>`; }),
     W("B2 · Km de trazado por ruta nacional (las 15 mayores)", async () => {
       const r = await json("resumen_rutas.json");
       return barrasHTML(r.rutas.slice(0, 15).map(x => ({ n: "Ruta Nacional " + x.rtn, v: x.km })), { fmtV: v => fmt(v) + " km" });
@@ -108,16 +135,20 @@ const WIDGETS = {
       const pv = pvDePc();
       return barrasHTML(contar(await filasCapa("estaciones_at"), r => corto(pv[ultimo(r)] || "")), { top: 24 });
     }),
-    W("C2b · Potencia instalada en estaciones de alta tensión, por provincia (MVA)", async () => {
+    W(TEXTOS_WIDGETS.potenciaProvincia, async () => {
       const pv = pvDePc(); const por = {};
       for (const r of await filasCapa("estaciones_at")) { const n = corto(pv[ultimo(r)] || ""); por[n] = (por[n] || 0) + (r[6] || 0); }
       return barrasHTML(Object.entries(por).map(([n, v]) => ({ n, v })).sort((a, b) => b.v - a.v), { top: 24, fmtV: v => fmt(v) + " MVA" }) +
         "<p class='nota'>Es potencia INSTALADA de las estaciones que informan el dato (243 de 323). No es potencia disponible para nuevas conexiones: ese dato no se publica en forma abierta.</p>";
     }),
     W("C2c · Estaciones por concesionaria o propietaria", async () => barrasHTML(contar(await filasCapa("estaciones_at"), r => r[3]), { top: 15 })),
+    W(TEXTOS_WIDGETS.edenorEdelap, async () => {
+      const en = (await filasCapa("distribucion_edenor")).length, ed = (await filasCapa("distribucion_edelap")).length;
+      return barrasHTML([{ n: "Edenor", v: en }, { n: "Edelap", v: ed }]) + `<p class="nota">${TEXTOS_PANTALLAS.distribNota}</p>`;
+    }),
     W("C2d · Estaciones transformadoras de alta tensión", async () => {
       const pv = pvDePc();
-      return tablaHTML("tC2", [{ t: "Estación" }, { t: "Empresa" }, { t: "Provincia" }, { t: "Tensión de entrada (kV)" }, { t: "Tensión de salida (kV)" }, { t: "Potencia instalada (MVA)", num: 1 }, { t: "En servicio desde" }],
+      return tablaHTML("tC2", [{ t: "Estación" }, { t: "Empresa" }, { t: "Provincia" }, { t: "Tensión de entrada (kV)" }, { t: "Tensión de salida (kV)" }, { t: TEXTOS_PANTALLAS.potencia, num: 1 }, { t: "En servicio desde" }],
         (await filasCapa("estaciones_at")).map(r => [r[2], r[3], corto(pv[ultimo(r)] || ""), r[4], r[5], r[6], r[7]]));
     }),
     barrasProv("transformadoras", "C2e · Plantas transformadoras (capa del IGN) por provincia"),
@@ -126,13 +157,21 @@ const WIDGETS = {
   ],
   D: [
     barrasProv("estaciones_servicio", "D2 · Estaciones de servicio por provincia"),
+    W(TEXTOS_WIDGETS.banderas, async () => {
+      const f = (await filasCapa("estaciones_servicio")).filter(r => r[4] === "Energía");
+      return barrasHTML(contar(f, r => r[3]), { top: 12 }) + `<p class="nota">El gráfico cuenta solo puntos cuya fuente es Energía. ${TEXTOS_PANTALLAS.estacionesNota}</p>`;
+    }),
     barrasProv("yacimientos", "D3 · Yacimientos de hidrocarburos por provincia"),
     W("D4 · Yacimientos de hidrocarburos", async () => { const pv = pvDePc(); return tablaHTML("tD", [{ t: "Yacimiento" }, { t: "Provincia" }], (await filasCapa("yacimientos")).map(r => [r[2], corto(pv[ultimo(r)] || "")])); }),
   ],
   E: [
-    W("E2 · Establecimientos de salud por tipo", async () => barrasHTML(contar(await filasCapa("salud"), r => r[3]), { top: 12 })),
+    W(TEXTOS_WIDGETS.refes, async () => {
+      const r = await json("salud_refes_resumen.json"), d = r.total;
+      return `<p class="rotulo">Tipología (todo REFES)</p>${barrasHTML(Object.entries(d.por_tipologia).map(([n, v]) => ({ n, v })).sort((a, b) => b.v - a.v), { top: 12 })}<p class="rotulo">Origen de financiamiento (todo REFES)</p>${barrasHTML(Object.entries(d.por_origen).map(([n, v]) => ({ n, v })).sort((a, b) => b.v - a.v))}<p class="nota">${TEXTOS_PANTALLAS.saludNota}</p>`;
+    }),
+    W("E3 · Establecimientos de salud del IGN por tipo", async () => barrasHTML(contar(await filasCapa("salud"), r => r[3]), { top: 12 })),
     barrasProv("salud", "E3 · Establecimientos de salud por provincia"),
-    W("E4 · Habitantes por establecimiento de salud", async () => {
+    W("E5 · Habitantes por establecimiento de salud", async () => {
       const filas = await filasCapa("salud"); const n = {}; for (const r of filas) n[ultimo(r)] = (n[ultimo(r)] || 0) + 1;
       const ok = pcsPermitidos();
       return tablaHTML("tE", [{ t: "Provincia" }, { t: "Habitantes", num: 1 }, { t: "Establecimientos", num: 1 }, { t: "Habitantes por establecimiento", num: 1 }],
@@ -178,24 +217,26 @@ const WIDGETS = {
     W("G4 · Puertos y aeropuertos", async () => { const pv = pvDePc(); const p = (await filasCapa("puertos")).map(r => [r[2], "Puerto", corto(pv[ultimo(r)] || "")]); const a = (await filasCapa("aeropuertos")).map(r => [r[2], "Aeropuerto", corto(pv[ultimo(r)] || "")]); return tablaHTML("tG", [{ t: "Nombre" }, { t: "Tipo" }, { t: "Provincia" }], [...p, ...a]); }),
   ],
   H: [
-    W("H2 · Importaciones por aduana", async () => {
+    W("H2b · Kilómetros de límite por país vecino", async () => { const d = await json("limites_km.json"); return tablaHTML("tHL", [{ t: "País vecino" }, { t: "Límite aproximado (km)", num: 1, f: fmt1 }], d.paises.map(x => [x.pais, x.km_total])) + `<p class="nota">${TEXTOS_PANTALLAS.limite}</p>`; }),
+    W("H2c · Rutas que llegan a pasos de frontera", async () => { const r = await json("rutas_internacionales.json"); return tablaHTML("tHI", [{ t: "Ruta" }, { t: "Tipo" }, { t: "Longitud (km)", num: 1, f: fmt1 }, { t: "Provincias" }, { t: "Pasos" }, { t: "Países" }], r.map(x => [`${x.categoria === "nacional" ? "RN" : "RP"} ${x.ruta}`, x.categoria === "nacional" ? "Nacional" : "Provincial", x.km, x.provincias.join(", "), x.pasos.join(", "), x.paises.join(", ")])); }),
+    W(TEXTOS_WIDGETS.impAduana, async () => {
       const a = await json("aduanas_comercio.json"); const ok = pcsPermitidos();
-      return barrasHTML(a.aduanas.filter(x => !ok || ok.has(x.pc)).sort((x, y) => y.imp - x.imp).map(x => ({ n: x.n, v: x.imp / 1e6 })), { top: 15, fmtV: v => "US$ " + fmt(v) + " M" });
+      return barrasHTML(a.aduanas.filter(x => !ok || ok.has(x.pc)).sort((x, y) => y.imp - x.imp).map(x => ({ n: x.n, v: x.imp / 1e6 })), { top: 15, fmtV: v => "US$ " + fmt(v) + " M" }) + `<p class="nota">${TEXTOS_PANTALLAS.aduanaNota}</p>`;
     }),
     W("H3 · Exportaciones registradas por aduana", async () => {
       const a = await json("aduanas_comercio.json"); const ok = pcsPermitidos();
       return barrasHTML(a.aduanas.filter(x => !ok || ok.has(x.pc)).sort((x, y) => y.exp - x.exp).map(x => ({ n: x.n, v: x.exp / 1e6 })), { top: 15, fmtV: v => "US$ " + fmt(v) + " M" }) +
         `<p class='nota'>El archivo de exportaciones por aduana de ARCA reserva parte de los datos por secreto estadístico: lo que se muestra es el ${Math.round(100 * a.exp_total_aduanas / a.exp_total_nacional)} % del total de exportaciones que ARCA informa en el mismo período. Sirve para comparar aduanas, no para sumar el total del país.</p>`;
     }),
-    W("H4 · Qué se importa (todo el país)", async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.cap_i.map(([n, v]) => ({ n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }); }),
-    W("H5 · De dónde se importa", async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.pais_i.map(([n, v]) => ({ n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }) + "<p class='nota'>País de origen de la mercadería.</p>"; }),
+    W(TEXTOS_WIDGETS.queImporta, async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.cap_i.map(([n, v]) => ({ n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }); }),
+    W(TEXTOS_WIDGETS.paisOrigen, async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.pais_i.map(([n, v]) => ({ n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }) + "<p class='nota'>País de origen de la mercadería; valores FOB.</p>"; }),
     W("H6 · Qué se exporta (según el archivo por aduana)", async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.cap_e.map(([n, v]) => ({ n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }); }),
     W("H7 · A dónde se exporta (según el archivo por aduana)", async () => { const a = await json("aduanas_comercio.json"); return barrasHTML(a.pais_e.map(([n, v]) => ({ n: n === "Sin dato" ? "Sin país asignado" : n, v: v / 1e6 })), { fmtV: v => "US$ " + fmt(v) + " M" }); }),
-    W("H8 · Comercio exterior por aduana", async () => {
+    W(TEXTOS_WIDGETS.importacionTabla, async () => {
       const a = await json("aduanas_comercio.json"); const ok = pcsPermitidos(); const pv = pvDePc();
-      return tablaHTML("tH1", [{ t: "Aduana" }, { t: "Tipo" }, { t: "Provincia" }, { t: "Importaciones (US$ M)", num: 1 }, { t: "Exportaciones registradas (US$ M)", num: 1 }, { t: "Medio principal de importación" }],
+      return tablaHTML("tH1", [{ t: "Aduana" }, { t: "Tipo" }, { t: "Provincia" }, { t: "Importaciones IC + IG (US$ M FOB)", num: 1 }, { t: "Exportaciones registradas (US$ M)", num: 1 }, { t: "Medio principal de importación" }],
         a.aduanas.filter(x => !ok || ok.has(x.pc)).map(x => [x.n, x.zf ? "Zona franca" : "Aduana", corto(pv[x.pc] || ""), Math.round(x.imp / 1e6), Math.round(x.exp / 1e6), x.medio_i])) +
-        "<p class='nota'>Aduana de registro de la operación; no es el paso de frontera por donde cruzó la mercadería. Los códigos de aduana y su ubicación (por la ciudad que nombran) salen del anexo de la RG 1452 de ARCA.</p>";
+        `<p class='nota'>Aduana de registro de la operación; no es el paso de frontera por donde cruzó la mercadería. Las importaciones suman los tipos IC + IG (a consumo), en FOB. ${TEXTOS_PANTALLAS.aduanaNota} Los códigos de aduana y su ubicación (por la ciudad que nombran) salen del anexo de la RG 1452 de ARCA.</p>`;
     }),
     barrasProv("pasos", "H9 · Pasos de frontera por provincia"),
     W("H10 · Pasos de frontera por país vecino", async () => barrasHTML(contar(await filasCapa("pasos"), r => r[5]).map(x => ({ n: x.n[0] + x.n.slice(1).toLowerCase(), v: x.v })))),

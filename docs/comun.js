@@ -1,6 +1,7 @@
 "use strict";
 /* Cosas que comparten todas las páginas: herramientas de accesibilidad y datos de contacto. */
 (function () {
+  const TEXTO_FORMULARIO = { enviando: "Enviando…", enviado: "Enviado", error: "No se pudo enviar. Se abrirá tu programa de correo para que puedas enviar el mensaje.", respaldo: "Se abrió tu programa de correo con el mensaje listo para enviar." };
   const raiz = document.documentElement;
   const KEY = "mapa-ar-accesibilidad";
   const estado = { tam: 0, gris: false, contraste: false, subrayar: false };
@@ -65,20 +66,26 @@
       const d = new FormData(form);
       const quiero = d.getAll("quiero").join("; ");
       d.delete("quiero"); d.append("quiero", quiero);
+      if (d.get("_honey")) return;
       if (c.envio) {
-        estadoForm.textContent = "Enviando…";
+        estadoForm.textContent = TEXTO_FORMULARIO.enviando;
         try {
-          const r = await fetch(c.envio, { method: "POST", body: d, headers: { Accept: "application/json" } });
+          const datos = Object.fromEntries(d.entries());
+          const r = await fetch(c.envio, { method: "POST", body: JSON.stringify(datos), headers: { Accept: "application/json", "Content-Type": "application/json" } });
           if (!r.ok) throw new Error(String(r.status));
+          const resultado = await r.json();
+          if (resultado.success === false) throw new Error("formsubmit");
           form.reset();
-          estadoForm.textContent = "¡Gracias! Recibimos tu mensaje.";
+          estadoForm.textContent = TEXTO_FORMULARIO.enviado;
         } catch (e) {
-          estadoForm.textContent = "No se pudo enviar. Probá de nuevo en unos minutos.";
+          const cuerpo = [...d.entries()].map(([k, v]) => `${k}: ${v}`).join("\n");
+          location.href = `mailto:${c.email}?subject=${encodeURIComponent(d.get("_subject") || "Comentarios sobre el mapa")}&body=${encodeURIComponent(cuerpo)}`;
+          estadoForm.textContent = TEXTO_FORMULARIO.error;
         }
       } else {
         const cuerpo = [...d.entries()].map(([k, v]) => `${k}: ${v}`).join("\n");
         location.href = `mailto:${c.email}?subject=${encodeURIComponent("Comentarios sobre el mapa")}&body=${encodeURIComponent(cuerpo)}`;
-        estadoForm.textContent = "Se abrió tu programa de correo con el mensaje listo para enviar.";
+        estadoForm.textContent = TEXTO_FORMULARIO.respaldo;
       }
     });
   }

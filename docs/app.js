@@ -8,6 +8,19 @@ const fmt1 = n => (n == null ? "—" : n.toLocaleString("es-AR", { maximumFracti
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const norm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
+/* Textos nuevos de la actualización de pantallas; centralizados para traducir después. */
+const TEXTOS_PANTALLAS = {
+  hombres: "Hombres", mujeres: "Mujeres", sinDatoPropio: "Sin dato propio",
+  notaSexo: "La suma de hombres y mujeres (45.618.787) difiere de la población del cuadro (45.892.285) porque los radios censales compartidos se repartieron por viviendas. No se completaron los datos faltantes.",
+  tasa14: "Tasa de actividad (14 años y más)", tasaTotal: "Tasa de actividad (población total)",
+  potencia: "potencia instalada (MVA, unidad sin confirmar)",
+  limite: "Los kilómetros se muestran por país vecino, sin separar frontera por río y frontera seca: esa separación todavía no se pudo calcular de forma confiable.",
+  estacionesNota: "Se conservaron 1.214 puntos del IGN porque no tenían una boca de Energía a menos de 300 m.",
+  saludNota: "REFES, corte 27/12/2024. Cruce seguro para el 8,56 % de los 38.767 establecimientos y el 39,92 % de los puntos IGN; los cruces dudosos quedaron sin completar.",
+  distribNota: "Inventarios de Edenor y Edelap para sus empresas y zonas; no reemplazan la capa nacional. Edesur no tiene subestaciones descargables.",
+  aduanaNota: "En 11 meses comparables, ARCA IC+IG quedó 5,2 % por debajo del INDEC. ARCA informa valor FOB y el INDEC valor CIF, que incluye flete y seguro.",
+};
+
 /* ---------- catálogos ---------- */
 const TIPOS_GRUPOS = [
   { id: "mun", nombre: "Municipios", cods: ["MU", "M1", "M2", "M3"] },
@@ -53,6 +66,7 @@ const claseDe = (v, cortes) => { let i = 0; while (i < cortes.length && v >= cor
 /* ---------- capas del mapa ---------- */
 const CAPAS = {
   rutas: { n: "Rutas nacionales", f: "capa_rutas.json", t: "lineas", c: "#9b2c22", w: 1.8 },
+  rutas_provinciales: { n: "Rutas provinciales", f: "capa_rutas_provinciales.json", t: "lineas", c: "#c4892b", w: 1.1 },
   limites: { n: "Límite internacional", f: "capa_limites.json", t: "lineas", c: "#0b1d3a", w: 1.3, dash: "2 4" },
   ferrocarril: { n: "Ferrocarril", f: "capa_ferrocarril.json", t: "lineas", c: "#46567a", w: 1.4, dash: "5 4" },
   lineas_electricas: { n: "Líneas de transmisión eléctrica", f: "capa_lineas_electricas.json", t: "lineas", c: "#c4892b", w: 1.4 },
@@ -61,15 +75,17 @@ const CAPAS = {
   pasos: { n: "Pasos de frontera", f: "capa_pasos.json", t: "puntos", c: "#8a5b12", r: 5, info: p => ({ t: p[2], s: `${p[3]} · ${p[4]}${p[5] ? " · con " + p[5] : ""}`, x: p[6] ? "Cruce " + p[6].toLowerCase() : "" }) },
   aduanas_com: { n: "Aduanas (comercio exterior)", f: "aduanas_comercio.json", t: "aduanas", c: "#0b1d3a" },
   aduanas: { n: "Puestos de control aduanero (IGN)", f: "capa_aduanas.json", t: "puntos", c: "#8a5b12", r: 4, info: p => ({ t: p[2] }) },
-  estaciones_at: { n: "Estaciones transformadoras de alta tensión", f: "capa_estaciones_at.json", t: "puntos", c: "#3a5f8a", r: 4.5, info: p => ({ t: p[2], s: [p[3], p[4] ? p[4] + " kV" : ""].filter(Boolean).join(" · "), x: p[6] ? `Potencia instalada: ${fmt(p[6])} MVA` + (p[7] ? ` · en servicio desde ${p[7]}` : "") : "Potencia instalada: sin dato" }) },
+  estaciones_at: { n: "Estaciones transformadoras de alta tensión", f: "capa_estaciones_at.json", t: "puntos", c: "#3a5f8a", r: 4.5, info: p => ({ t: p[2], s: [p[3], p[4] ? p[4] + " kV" : ""].filter(Boolean).join(" · "), x: p[6] ? `${TEXTOS_PANTALLAS.potencia}: ${fmt(p[6])}` + (p[7] ? ` · en servicio desde ${p[7]}` : "") : `${TEXTOS_PANTALLAS.potencia}: sin dato` }) },
   parques: { n: "Parques y áreas industriales", f: "capa_parques.json", t: "puntos", c: "#9b2c22", r: 3.6, info: p => ({ t: p[2], s: `${p[3]} · ${p[4]} · ${p[5]}`, x: [p[6] ? p[6] + " empresas" : "", p[7] ? fmt1(p[7]) + " ha" : "", p[8] || ""].filter(Boolean).join(" · ") }) },
   zonas_francas: { n: "Zonas francas", f: "capa_zonas_francas.json", t: "puntos", c: "#c4892b", r: 6, info: p => ({ t: p[2], s: p[3], x: p[4] ? "Habilitada el " + p[4] : "" }) },
   centrales: { n: "Centrales eléctricas", f: "capa_centrales.json", t: "puntos", c: "#9b2c22", r: 4.5, info: p => ({ t: p[2], s: p[3] }) },
   transformadoras: { n: "Plantas transformadoras", f: "capa_transformadoras.json", t: "puntos", c: "#3a5f8a", r: 3.5, info: p => ({ t: p[2] }) },
   yacimientos: { n: "Yacimientos de hidrocarburos", f: "capa_yacimientos.json", t: "puntos", c: "#0b1d3a", r: 5, info: p => ({ t: p[2] }) },
-  estaciones_servicio: { n: "Estaciones de servicio", f: "capa_estaciones_servicio.json", t: "puntos", c: "#c4892b", r: 2.5, info: p => ({ t: p[2] || "Estación de servicio" }) },
+  estaciones_servicio: { n: "Estaciones de servicio", f: "capa_estaciones_servicio.json", t: "puntos", c: "#c4892b", r: 2.5, info: p => ({ t: p[2] || "Estación de servicio", s: [p[3], p[4]].filter(Boolean).join(" · ") }) },
+  edenor: { n: "Distribución Edenor (inventario propio)", f: "capa_distribucion_edenor.json", t: "puntos", c: "#7a4d9b", r: 4, info: p => ({ t: p[2], s: p[3], x: p[4] }) },
+  edelap: { n: "Distribución Edelap (inventario propio)", f: "capa_distribucion_edelap.json", t: "puntos", c: "#167d78", r: 4, info: p => ({ t: p[2], s: p[3], x: p[4] }) },
   tanques: { n: "Tanques de combustible", f: "capa_tanques.json", t: "puntos", c: "#57657f", r: 3, info: () => ({ t: "Tanque de combustible" }) },
-  salud: { n: "Establecimientos de salud", f: "capa_salud.json", t: "puntos", c: "#9b2c22", r: 2.6, info: p => ({ t: p[2], s: p[3] }) },
+  salud: { n: "Establecimientos de salud", f: "capa_salud.json", t: "puntos", c: "#9b2c22", r: 2.6, info: (p, i) => { const x = est.saludRefes?.[i]; return { t: p[2], s: [p[3], x?.[0], x?.[1]].filter(Boolean).join(" · ") }; } },
   fabricas: { n: "Fábricas", f: "capa_fabricas.json", t: "puntos", c: "#46567a", r: 3.4, info: p => ({ t: p[2] || "Fábrica" }) },
   universidades: { n: "Universidades", f: "capa_universidades.json", t: "puntos", c: "#c4892b", r: 3.4, info: p => ({ t: p[2] }) },
   puertos: { n: "Puertos", f: "capa_puertos.json", t: "puntos", c: "#3a5f8a", r: 5, info: p => ({ t: p[2] }) },
@@ -85,6 +101,7 @@ const METRICAS = {
   em: { l: "Edad mediana", u: " años", dir: "desc" },
   pea: { l: "Población económicamente activa", u: "", dir: "desc" },
   pea_t: { l: "Tasa de actividad (Censo 2022, sobre 14 años y más)", u: " %", dir: "desc", dec: 1 },
+  hom: { l: "Hombres (Censo 2022)", u: "", dir: "desc" },
   des_t: { l: "Desocupación (Censo 2022, sobre la PEA)", u: " %", dir: "desc", dec: 1 },
   d_at: { l: "Distancia a estación transformadora AT", u: " km", dir: "desc" },
   d_parque: { l: "Distancia a parque industrial", u: " km", dir: "asc" },
@@ -111,21 +128,22 @@ const TABS = [
   {
     id: "A", nombre: "A · Zonas y ciudades", capas: ["areas_protegidas"], capasOff: ["areas_protegidas"], coropleta: true, metricas: ["pob", "em", "pea", "pea_t", "des_t"],
     titulo: "A1 · Población por provincia y gobierno local",
-    nota: "Cada círculo es un gobierno local; su tamaño y color dependen de los habitantes del Censo 2022. Con el selector del ranking se pinta el mapa por edad mediana o población activa. Tocá un círculo o una provincia para ver el detalle.",
+    nota: "El relleno y los bordes marcados corresponden a provincias; cada círculo representa un gobierno local y su tamaño depende de la población del Censo 2022. Tocá un círculo o una provincia para ver el detalle.",
     kpis: v => [
       ["Provincias", fmt(new Set(v.map(m => m.pv)).size), "jurisdicciones"],
       ["Gobiernos locales", fmt(v.length), "con ubicación"],
       ["Habitantes", fmt(sum(v, m => m.pob)), "Censo 2022"],
       ["Viviendas", fmt(sum(v, m => m.viv)), "Censo 2022"],
       ["Población económicamente activa", fmt(sum(v, m => m.pea)), "Censo 2022 · 14 años y más"],
+      [TEXTOS_PANTALLAS.tasaTotal, fmt1(100 * sum(v, m => m.pea) / (sum(v, m => m.pob_r || m.pob) || 1)) + " %", "sobre población total"],
       ["Edad mediana", fmt1(sum(v.filter(m => m.em != null && m.pob), m => m.em * m.pob) / (sum(v.filter(m => m.em != null && m.pob), m => m.pob) || 1)) + " años", "promedio ponderado por habitantes"],
       ["Mayor población", v.length ? [...v].sort((a, b) => (b.pob || 0) - (a.pob || 0))[0].n.replace(/ \(15 comunas\)/, "") : "—", "en la selección"],
     ],
   },
   {
-    id: "B", nombre: "B · Rutas y fronteras", capas: ["rutas", "ferrocarril", "pasos", "limites"], metricas: ["d_ruta", "d_tren", "d_paso"],
-    titulo: "B1 · Rutas nacionales, ferrocarril y pasos de frontera",
-    nota: "Rutas nacionales y ferrocarril según el IGN. Las distancias son en línea recta desde cada gobierno local.",
+    id: "B", nombre: "B · Rutas y fronteras", capas: ["rutas", "rutas_provinciales", "ferrocarril", "pasos", "limites"], metricas: ["d_ruta", "d_tren", "d_paso"],
+    titulo: "B1 · Rutas nacionales y provinciales, ferrocarril y pasos de frontera",
+    nota: "Rutas nacionales y provinciales y ferrocarril según el IGN. Las distancias son en línea recta desde cada gobierno local.",
     kpis: v => [
       ["Gobiernos locales", fmt(v.length), "en la selección"],
       ["A ≤5 km de ruta nacional", fmt(cuenta(v, m => m.d_ruta <= 5)), pct(cuenta(v, m => m.d_ruta <= 5), v.length)],
@@ -136,12 +154,12 @@ const TABS = [
     ],
   },
   {
-    id: "C", nombre: "C · Red eléctrica", capas: ["lineas_electricas", "estaciones_at", "centrales", "transformadoras"], capasOff: ["transformadoras"], metricas: ["d_at", "d_central", "d_transf"],
+    id: "C", nombre: "C · Red eléctrica", capas: ["lineas_electricas", "estaciones_at", "centrales", "transformadoras", "edenor", "edelap"], capasOff: ["transformadoras", "edenor", "edelap"], metricas: ["d_at", "d_central", "d_transf"],
     titulo: "C1 · Estaciones transformadoras de alta tensión, centrales y líneas de transmisión",
-    nota: "Las estaciones de alta tensión (323) vienen de la Secretaría de Energía, con tensión y potencia INSTALADA en MVA. No hay una publicación abierta de la potencia DISPONIBLE para nuevas conexiones: no se debe leer la potencia instalada como capacidad libre.",
+    nota: "Las estaciones de alta tensión (323) vienen de la Secretaría de Energía. El dato se rotula como potencia instalada (MVA, unidad sin confirmar); no indica capacidad libre para nuevas conexiones.",
     kpis: v => [
       ["Estaciones de alta tensión", "323", "Secretaría de Energía"],
-      ["Potencia instalada informada", "33.013 MVA", "243 estaciones con dato"],
+      [TEXTOS_PANTALLAS.potencia, "33.013 MVA", "243 estaciones con dato"],
       ["Centrales eléctricas", "445", "todo el país"],
       ["A ≤25 km de una estación AT", fmt(cuenta(v, m => m.d_at <= 25)), pct(cuenta(v, m => m.d_at <= 25), v.length)],
       ["A más de 100 km de una estación AT", fmt(cuenta(v, m => m.d_at > 100)), pct(cuenta(v, m => m.d_at > 100), v.length)],
@@ -151,10 +169,10 @@ const TABS = [
   {
     id: "D", nombre: "D · Red de combustibles", capas: ["yacimientos", "ductos", "estaciones_servicio", "tanques"], metricas: ["est10"],
     titulo: "D1 · Yacimientos, ductos, tanques y estaciones de servicio",
-    nota: "Yacimientos de hidrocarburos (se marca el centro de cada área), ductos subterráneos, tanques de combustible y estaciones de servicio del IGN.",
+    nota: "Yacimientos de hidrocarburos (se marca el centro de cada área), ductos subterráneos y tanques. Estaciones: Energía (empresa y bandera) más puntos IGN sin boca de Energía a menos de 300 m. " + TEXTOS_PANTALLAS.estacionesNota,
     kpis: v => [
       ["Yacimientos", "872", "todo el país"],
-      ["Estaciones de servicio", "5.383", "todo el país"],
+      ["Estaciones de servicio", "5.821", "4.607 Energía + 1.214 IGN"],
       ["Tanques de combustible", "1.242", "todo el país"],
       ["Gobiernos locales", fmt(v.length), "en la selección"],
       ["Sin estación de servicio a ≤10 km", fmt(cuenta(v, m => m.est10 === 0)), pct(cuenta(v, m => m.est10 === 0), v.length)],
@@ -164,7 +182,7 @@ const TABS = [
   {
     id: "E", nombre: "E · Red de salud", capas: ["salud"], metricas: ["salud10"],
     titulo: "E1 · Establecimientos de salud",
-    nota: "Edificios de salud registrados por el IGN (hospitales, centros sanitarios, etc.). No distingue nivel de complejidad.",
+    nota: "Edificios de salud registrados por el IGN. Cuando hay cruce seguro, la ficha agrega tipología y origen de financiamiento de REFES; no informa nivel de complejidad. " + TEXTOS_PANTALLAS.saludNota,
     kpis: v => [
       ["Establecimientos de salud", "8.311", "todo el país"],
       ["Gobiernos locales", fmt(v.length), "en la selección"],
@@ -188,9 +206,9 @@ const TABS = [
     ],
   },
   {
-    id: "G", nombre: "G · Polos y nodos logísticos", capas: ["puertos", "aeropuertos", "aerodromos", "peajes", "pesaje", "rutas", "ferrocarril"], capasOff: ["aerodromos"], metricas: ["d_puerto", "d_aero"],
+    id: "G", nombre: "G · Parques industriales y nodos logísticos", capas: ["puertos", "aeropuertos", "aerodromos", "peajes", "pesaje", "rutas", "rutas_provinciales", "ferrocarril", "parques"], capasOff: ["aerodromos", "parques"], metricas: ["d_puerto", "d_aero"],
     titulo: "G1 · Puertos, aeropuertos, peajes y estaciones de pesaje",
-    nota: "Nodos de transporte del IGN. Es el equivalente a los polos logísticos del mapa original, con la información pública disponible.",
+    nota: "Nodos de transporte y rutas nacionales y provinciales del IGN. Se incorpora la capa de parques industriales.",
     kpis: v => [
       ["Puertos", "155", "todo el país"],
       ["Aeropuertos", "60", "todo el país"],
@@ -201,9 +219,9 @@ const TABS = [
     ],
   },
   {
-    id: "H", nombre: "H · Aduanas", capas: ["aduanas_com", "pasos", "limites", "aduanas"], capasOff: ["aduanas"], metricas: ["d_paso"],
+    id: "H", nombre: "H · Aduanas", capas: ["aduanas_com", "pasos", "limites", "aduanas", "rutas", "rutas_provinciales"], capasOff: ["aduanas", "rutas", "rutas_provinciales"], metricas: ["d_paso"],
     titulo: "H1 · Comercio exterior por aduana",
-    nota: "Cada círculo es una aduana (de registro de la operación); su tamaño muestra importaciones más exportaciones de los últimos 12 meses publicados por ARCA. Una aduana no es un paso de frontera: los pasos se muestran aparte. Las exportaciones por aduana son parciales (reserva estadística de ARCA).",
+    nota: "Cada círculo es una aduana (de registro); su tamaño muestra importaciones IC+IG más exportaciones de 12 meses. Una aduana no es un paso. Las exportaciones por aduana son parciales. " + TEXTOS_PANTALLAS.aduanaNota,
     kpis: () => {
       const a = est.adu;
       if (!a) return [];
@@ -212,7 +230,7 @@ const TABS = [
       const M = v => "US$ " + Math.round(v / 1e6).toLocaleString("es-AR") + " M";
       return [
         ["Aduanas con operaciones", fmt(a.aduanas.length), "incluye zonas francas"],
-        ["Importaciones", M(a.imp_total), `${a.desde.slice(4)}/${a.desde.slice(0, 4)} a ${a.hasta.slice(4)}/${a.hasta.slice(0, 4)}`],
+      ["Importaciones a consumo (IC + IG, FOB)", M(a.imp_total), `${a.desde.slice(4)}/${a.desde.slice(0, 4)} a ${a.hasta.slice(4)}/${a.hasta.slice(0, 4)}`],
         ["Exportaciones por aduana", M(a.exp_total_aduanas), `${Math.round(100 * a.exp_total_aduanas / a.exp_total_nacional)} % del total de ARCA`],
         ["Mayor aduana importadora", top.n, M(top.imp)],
         ["Mayor aduana exportadora", topE.n, M(topE.exp)],
@@ -241,26 +259,33 @@ const F_SENADO = { t: "Mapa de Parques Industriales de la Argentina · Comisión
 const F_RENPI = { t: "Secretaría de Industria y Comercio · Registro Nacional de Parques Industriales (RENPI), con la base descargable", u: "https://datos.gob.ar/dataset/registro-nacional-de-parques-industriales-renpi" };
 const F_BA_PARQUES = { t: "Provincia de Buenos Aires · Agrupamientos industriales aprobados por decreto (CSV; nombre y municipio, sin coordenadas)", u: "https://catalogo.datos.gba.gob.ar/dataset/348dddc1-9578-4fad-9349-6b8bb72630dc/resource/0945236f-6aea-4ff3-8899-41c347c2b0f9/download/agrupamientos-industriales-aprobados-por-decreto-2026.csv" };
 const F_SF_PARQUES = { t: "Santa Fe · Parques y áreas industriales, capa geográfica del geoportal IDESF", u: "https://aswe.santafe.gov.ar/idesf/wms?service=WMS&request=GetCapabilities" };
-const F_ENERGIA = { t: "Secretaría de Energía · Transporte eléctrico de alta tensión: estaciones transformadoras (datos.gob.ar; potencia instalada, no disponible)", u: "https://datos.gob.ar/dataset/transporte-electrico-at-estaciones-transformadoras" };
+const F_ENERGIA = { t: "Secretaría de Energía · Transporte eléctrico de alta tensión: estaciones transformadoras (potencia instalada; unidad MVA sin confirmar)", u: "https://datos.gob.ar/dataset/transporte-electrico-at-estaciones-transformadoras" };
 const F_OPEX = { t: "INDEC · Origen provincial de las exportaciones (informe con anexo de cuadros)", u: "https://www.indec.gob.ar/uploads/informesdeprensa/opex_03_26929F77A2CA.pdf" };
 const F_INDEC_CE = { t: "INDEC · Comercio exterior (estadísticas y publicaciones)", u: "https://www.indec.gob.ar/indec/web/Nivel3-Tema-3-2" };
 const F_EPH = { t: "INDEC · Encuesta Permanente de Hogares, 2.º trimestre de 2026 (cuadros 3.2 y 3.3): comparación que se ve en la ficha de los gobiernos locales de 31 aglomerados", u: "https://www.indec.gob.ar/uploads/informesdeprensa/mercado_trabajo_eph_2trim26433FCBC5A8.pdf" };
 const F_MIC = { t: "Mapa de Inteligencia Competitiva de Paraguay (el modelo que sigue esta versión)", u: "https://www.mic.gov.py/mapamic/" };
+const F_ENERGIA_COMB = { t: "Secretaría de Energía · Precios en surtidor (empresa y bandera) y puntos de servicio", u: "https://datos.energia.gob.ar/dataset/1c181390-5045-475e-94dc-410429be4b17" };
+const F_ENERGIA_RED = { t: "Secretaría de Energía · Subestaciones de distribución de Edenor", u: "https://datos.energia.gob.ar/dataset/70f994f6-fde6-4e09-b3a4-72f5f7145181" };
+const F_ENERGIA_EDELAP = { t: "Secretaría de Energía · Subestaciones de distribución de Edelap", u: "https://datos.energia.gob.ar/dataset/2e0fe150-8cf4-4707-927d-94bfaf95bb53" };
+const F_REFES = { t: "Ministerio de Salud · Registro Federal de Establecimientos de Salud (REFES), corte 27/12/2024", u: "https://datos.salud.gob.ar/dataset/336cf4d9-447a-44c4-8e34-0ba1fc293d55" };
+const F_IGN_RUTAS = { t: "IGN · Red vial provincial (WFS)", u: "https://wms.ign.gob.ar/geoserver/ows" };
+const F_IGN_LIMITES = { t: "IGN · Límites internacionales y departamentos (WFS)", u: "https://wms.ign.gob.ar/geoserver/ows" };
+const F_INDEC_SEXO = { t: "INDEC · Censo 2022, sexo registrado al nacer y radios censales", u: "https://www.indec.gob.ar/indec/web/Nivel4-Tema-2-41-165" };
 const FUENTES = {
-  A: [F_CENSO, F_CODIGOS, F_RADIOS, F_EPH, F_IGN, F_MIC],
-  B: [F_IGN],
-  C: [F_ENERGIA, F_IGN],
-  D: [F_IGN],
-  E: [F_IGN],
+  A: [F_CENSO, F_CODIGOS, F_RADIOS, F_INDEC_SEXO, F_EPH, F_IGN, F_MIC],
+  B: [F_IGN, F_IGN_RUTAS, F_IGN_LIMITES],
+  C: [F_ENERGIA, F_ENERGIA_RED, F_ENERGIA_EDELAP, F_IGN],
+  D: [F_IGN, F_ENERGIA_COMB],
+  E: [F_IGN, F_REFES],
   F: [F_IGN, F_SENADO, F_RENPI, F_BA_PARQUES, F_SF_PARQUES],
-  G: [F_IGN],
-  H: [F_ARCA, F_ARCA_MAN, F_ARCA_COD, F_IGN],
+  G: [F_IGN, F_IGN_RUTAS],
+  H: [F_ARCA, F_ARCA_MAN, F_ARCA_COD, F_INDEC_CE, F_IGN, F_IGN_LIMITES],
   I: [F_OPEX, F_INDEC_CE],
 };
 
 /* ---------- estado ---------- */
 const est = {
-  tab: "A", munis: [], prov: [], resumenProv: [], cobertura: null,
+  tab: "A", munis: [], prov: [], resumenProv: [], cobertura: null, saludRefes: null,
   f: { reg: "", prov: "", tipo: "", pob: "", ba: "", cor: "", ros: "", dato: "" },
   metrica: "pob", orden: "desc", nRank: 15, activas: {}, cache: {}, vis: [],
 };
@@ -447,6 +472,7 @@ function filtrar() {
 async function aplicar(reencuadrar, conFiltro) {
   est.vis = filtrar();
   if (est.tab === "H" && !est.adu) { try { est.adu = await json("aduanas_comercio.json"); } catch (e) { /* se muestra sin datos de aduanas */ } }
+  if (est.tab === "E" && !est.saludRefes) { try { est.saludRefes = await json("capa_salud_refes.json"); } catch (e) { /* capa principal sigue disponible */ } }
   const activos = Object.values(est.f).filter(Boolean).length;
   $("#contFiltros").hidden = !activos;
   $("#contFiltros").textContent = activos;
@@ -631,17 +657,17 @@ async function dibujarCapas() {
       const max = Math.max(...lista.map(a => a.imp + a.exp), 1);
       for (const a of lista) {
         const mk = L.circleMarker([a.la, a.lo], { renderer: paneles.puntos, pane: "puntos", radius: 5 + 20 * Math.sqrt((a.imp + a.exp) / max), color: "#ffffff", weight: 1, fillColor: a.zf ? "#c4892b" : def.c, fillOpacity: 0.62 });
-        mk.on("click", () => popup.setLatLng([a.la, a.lo]).setContent(`<div class="pop"><b>${esc(a.n)}</b><small>${a.zf ? "Zona franca" : "Aduana"}${a.ap ? " · ubicación aproximada" : ""}</small><br>Importaciones ${mill(a.imp / 1e6)}<br>Exportaciones ${mill(a.exp / 1e6)}<br><button type="button" data-adu="${a.c}">Ver detalle</button></div>`).openOn(mapa));
+        mk.on("click", () => popup.setLatLng([a.la, a.lo]).setContent(`<div class="pop"><b>${esc(a.n)}</b><small>${a.zf ? "Zona franca" : "Aduana"}${a.ap ? " · ubicación aproximada" : ""}</small><br>Importaciones IC + IG (FOB) ${mill(a.imp / 1e6)}<br>Exportaciones ${mill(a.exp / 1e6)}<br><button type="button" data-adu="${a.c}">Ver detalle</button></div>`).openOn(mapa));
         g.addLayer(mk);
       }
     } else if (def.t === "lineas") {
       g.addLayer(L.polyline(datos.map(l => l.map(([x, y]) => [y, x])), { renderer: paneles.lineas, pane: "lineas", color: def.c, weight: def.w, opacity: 0.85, dashArray: def.dash || null, interactive: false, smoothFactor: 1.2 }));
     } else {
-      for (const p of datos) {
+      for (const [i, p] of datos.entries()) {
         const mk = L.circleMarker([p[0], p[1]], { renderer: paneles.puntos, pane: "puntos", radius: def.r, color: "#ffffff", weight: 0.6, fillColor: def.c, fillOpacity: 0.9 });
         mk.on("click", () => {
-          const i = def.info(p);
-          popup.setLatLng([p[0], p[1]]).setContent(`<div class="pop"><b>${esc(i.t)}</b>${i.s ? `<small>${esc(i.s)}</small><br>` : ""}${i.x ? esc(i.x) : ""}<br><small>${esc(def.n)}</small></div>`).openOn(mapa);
+          const detalle = def.info(p, i);
+          popup.setLatLng([p[0], p[1]]).setContent(`<div class="pop"><b>${esc(detalle.t)}</b>${detalle.s ? `<small>${esc(detalle.s)}</small><br>` : ""}${detalle.x ? esc(detalle.x) : ""}<br><small>${esc(def.n)}</small></div>`).openOn(mapa);
         });
         lote.push(mk);
       }
@@ -731,6 +757,8 @@ async function abrirFicha(m) {
     <dl>
       ${dato("Habitantes", m.pob != null ? fmt(m.pob) : "Sin dato")}
       ${dato("Viviendas", m.viv != null ? fmt(m.viv) : "Sin dato")}
+      ${dato(TEXTOS_PANTALLAS.hombres, m.hom != null ? fmt(m.hom) : TEXTOS_PANTALLAS.sinDatoPropio)}
+      ${dato(TEXTOS_PANTALLAS.mujeres, m.muj != null ? fmt(m.muj) : TEXTOS_PANTALLAS.sinDatoPropio)}
       ${dato("Habitantes por vivienda", m.pob != null && m.viv ? fmt1(m.pob / m.viv) : "—")}
       ${dato("Código INDEC", esc(m.c))}
     </dl>
@@ -738,11 +766,11 @@ async function abrirFicha(m) {
     <dl>
       ${dato("Edad mediana", m.em != null ? m.em + " años" : "Sin dato")}
       ${dato("Población económicamente activa", m.pea != null ? fmt(m.pea) : "Sin dato")}
-      ${dato("Tasa de actividad · sobre 14 años y más", m.pea_t != null ? fmt1(m.pea_t) + " %" : "Sin dato")}
-      ${dato("Tasa de actividad · sobre la población total", m.pea != null && (m.pob_r || m.pob) ? fmt1((100 * m.pea) / (m.pob_r || m.pob)) + " %" : "Sin dato")}
+      ${dato(TEXTOS_PANTALLAS.tasa14, m.pea_t != null ? fmt1(m.pea_t) + " %" : "Sin dato")}
+      ${dato(TEXTOS_PANTALLAS.tasaTotal, m.pea != null && (m.pob_r || m.pob) ? fmt1((100 * m.pea) / (m.pob_r || m.pob)) + " %" : "Sin dato")}
       ${dato("Desocupación (sobre la población activa)", m.des_t != null ? fmt1(m.des_t) + " %" : "Sin dato")}
     </dl>
-    <p class="nota" style="padding:0">${origenDemografico(m)}</p>
+    <p class="nota" style="padding:0">${origenDemografico(m)} ${TEXTOS_PANTALLAS.notaSexo}</p>
     ${bloqueEPH(m)}
     <h4>Distancia a las grandes ciudades</h4>
     <dl>${dato("Buenos Aires", km(m.d_ba))}${dato("Córdoba", km(m.d_cor))}${dato("Rosario", km(m.d_ros))}</dl>
@@ -933,7 +961,7 @@ function abrirFichaAduana(cod) {
     <h3>${esc(a.n)}</h3>
     <p class="sub">${a.zf ? "Zona franca" : "Aduana"} · ARCA · ${est.adu.desde.slice(4)}/${est.adu.desde.slice(0, 4)} a ${est.adu.hasta.slice(4)}/${est.adu.hasta.slice(0, 4)}</p>
     <dl>
-      <div><dt>Importaciones</dt><dd>${M(a.imp)}</dd></div>
+      <div><dt>Importaciones a consumo (IC + IG, FOB)</dt><dd>${M(a.imp)}</dd></div>
       <div><dt>Exportaciones registradas</dt><dd>${M(a.exp)}</dd></div>
       <div><dt>Ítems importados</dt><dd>${fmt(a.items)}</dd></div>
       <div><dt>Medio principal (import. / export.)</dt><dd>${esc(a.medio_i || "—")} / ${esc(a.medio_e || "—")}</dd></div>

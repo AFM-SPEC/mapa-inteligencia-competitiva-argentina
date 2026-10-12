@@ -1,5 +1,5 @@
 # Arma docs/datos/aduanas_comercio.json con el comercio exterior por ADUANA (ARCA), a partir de los resúmenes mensuales que genera procesar_aduanas.py.
-# Importaciones: FOB en dólares de cada ítem, contado una vez. Exportaciones: archivo «agregado» de ARCA (con reserva estadística: no llega al total nacional).
+# Importaciones a consumo (IC + IG): FOB en dólares de cada ítem, contado una vez. Otros tipos excluyen IC e IG. Exportaciones: archivo «agregado» de ARCA (con reserva estadística: no llega al total nacional).
 # La ubicación de cada aduana sale de la ciudad que nombra el código (tabla ANEXO IV de la RG 1452); no es un dato oficial de coordenadas.
 # Uso:  python3 -I herramientas/armar_aduanas.py
 import csv, glob, json
@@ -88,6 +88,7 @@ def prov_de(lat, lon):
 
 meses = sorted(glob.glob(f"{ORIGEN}/aduanas_mensual/*.json"))
 datos = [json.load(open(f)) for f in meses]
+datos = [d for d in datos if "202510" <= d["mes"] <= "202609"]
 claves = [d["mes"] for d in datos]
 print("meses:", claves)
 
@@ -102,11 +103,18 @@ def acumular(destino, origen):
 
 
 adu = {}
-nac = {"cap_i": {}, "cap_e": {}, "pais_i": {}, "pais_e": {}, "mes_i": [], "mes_e": [], "mes_te": []}
+nac = {"cap_i": {}, "cap_e": {}, "pais_i": {}, "pais_e": {}, "mes_i": [], "mes_e": [], "mes_te": [], "imp_otras": 0}
 for d in datos:
     nac["mes_i"].append(round(sum(a["usd"] for a in d["imp"].values())))
+    nac["imp_otras"] += sum(v["usd"] for aduana_tipos in d.get("imp_tipos", {}).values() for tipo, v in aduana_tipos.items() if tipo not in ("IC", "IG"))
     nac["mes_e"].append(round(sum(a["usd"] for a in d["exp"].values())))
     nac["mes_te"].append(round(d.get("tot_exp", 0)))
+    for cod, tipos in d.get("imp_tipos", {}).items():
+        otras = sum(v["usd"] for tipo, v in tipos.items() if tipo not in ("IC", "IG"))
+        if otras:
+            r = adu.setdefault(cod, {"i": {"usd": 0, "n": 0, "cap": {}, "pais": {}, "medio": {}, "mes": [0] * len(datos)},
+                                     "e": {"usd": 0, "n": 0, "cap": {}, "pais": {}, "medio": {}, "mes": [0] * len(datos), "kg": 0}, "io": 0})
+            r["io"] = r.get("io", 0) + otras
     for lado, clave in (("imp", "i"), ("exp", "e")):
         for cod, a in d[lado].items():
             r = adu.setdefault(cod, {"i": {"usd": 0, "n": 0, "cap": {}, "pais": {}, "medio": {}, "mes": [0] * len(datos)},
@@ -136,7 +144,7 @@ for cod, r in sorted(adu.items()):
     me = max(e["medio"].items(), key=lambda kv: kv[1])[0] if e["medio"] else None
     salida.append({
         "c": cod, "n": nom, "la": la, "lo": lo, "ap": aprox, "pc": prov_de(la, lo), "zf": cod >= "250",
-        "imp": round(i["usd"]), "exp": round(e["usd"]), "items": i["n"], "decl": e["n"], "kg": round(e["kg"]),
+        "imp": round(i["usd"]), "imp_otras": round(r.get("io", 0)), "exp": round(e["usd"]), "items": i["n"], "decl": e["n"], "kg": round(e["kg"]),
         "medio_i": MEDIOS.get(mi, mi), "medio_e": MEDIOS.get(me, me),
         "cap_i": top(i["cap"], 6, nombre_cap), "cap_e": top(e["cap"], 6, nombre_cap),
         "pais_i": top(i["pais"], 6, nombre_pais), "pais_e": top(e["pais"], 6, nombre_pais),
@@ -148,7 +156,7 @@ tot_e = sum(a["exp"] for a in salida)
 tot_te = sum(nac["mes_te"])
 out = {
     "meses": claves, "desde": claves[0], "hasta": claves[-1],
-    "imp_total": tot_i, "exp_total_aduanas": tot_e, "exp_total_nacional": tot_te,
+    "imp_total": tot_i, "imp_otras": round(nac["imp_otras"]), "exp_total_aduanas": tot_e, "exp_total_nacional": tot_te,
     "mes_i": nac["mes_i"], "mes_e": nac["mes_e"], "mes_te": nac["mes_te"],
     "cap_i": top(nac["cap_i"], 15, nombre_cap), "cap_e": top(nac["cap_e"], 15, nombre_cap),
     "pais_i": top(nac["pais_i"], 15, nombre_pais), "pais_e": top(nac["pais_e"], 15, nombre_pais),

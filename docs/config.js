@@ -8,5 +8,5 @@ window.CONFIG = {
   telefono: "",
   direccion: "",
   formulario: "",
-  envio: "",   // dirección a la que se envía el formulario de comentarios (por ejemplo, de Formspree)
+  envio: "https://formsubmit.co/ajax/info@neetipol.com",
 };
