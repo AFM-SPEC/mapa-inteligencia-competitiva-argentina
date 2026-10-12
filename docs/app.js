@@ -84,8 +84,8 @@ const METRICAS = {
   pob: { l: "Habitantes", u: "", dir: "desc" },
   em: { l: "Edad mediana", u: " años", dir: "desc" },
   pea: { l: "Población económicamente activa", u: "", dir: "desc" },
-  pea_t: { l: "Tasa de actividad", u: " %", dir: "desc", dec: 1 },
-  des_t: { l: "Desocupación (sobre la PEA)", u: " %", dir: "desc", dec: 1 },
+  pea_t: { l: "Tasa de actividad (Censo 2022, sobre 14 años y más)", u: " %", dir: "desc", dec: 1 },
+  des_t: { l: "Desocupación (Censo 2022, sobre la PEA)", u: " %", dir: "desc", dec: 1 },
   d_at: { l: "Distancia a estación transformadora AT", u: " km", dir: "desc" },
   d_parque: { l: "Distancia a parque industrial", u: " km", dir: "asc" },
   parq30: { l: "Parques industriales a ≤30 km", u: "", dir: "desc" },
@@ -244,9 +244,10 @@ const F_SF_PARQUES = { t: "Santa Fe · Parques y áreas industriales, capa geogr
 const F_ENERGIA = { t: "Secretaría de Energía · Transporte eléctrico de alta tensión: estaciones transformadoras (datos.gob.ar; potencia instalada, no disponible)", u: "https://datos.gob.ar/dataset/transporte-electrico-at-estaciones-transformadoras" };
 const F_OPEX = { t: "INDEC · Origen provincial de las exportaciones (informe con anexo de cuadros)", u: "https://www.indec.gob.ar/uploads/informesdeprensa/opex_03_26929F77A2CA.pdf" };
 const F_INDEC_CE = { t: "INDEC · Comercio exterior (estadísticas y publicaciones)", u: "https://www.indec.gob.ar/indec/web/Nivel3-Tema-3-2" };
+const F_EPH = { t: "INDEC · Encuesta Permanente de Hogares, 2.º trimestre de 2026 (cuadros 3.2 y 3.3): comparación que se ve en la ficha de los gobiernos locales de 31 aglomerados", u: "https://www.indec.gob.ar/uploads/informesdeprensa/mercado_trabajo_eph_2trim26433FCBC5A8.pdf" };
 const F_MIC = { t: "Mapa de Inteligencia Competitiva de Paraguay (el modelo que sigue esta versión)", u: "https://www.mic.gov.py/mapamic/" };
 const FUENTES = {
-  A: [F_CENSO, F_CODIGOS, F_RADIOS, F_IGN, F_MIC],
+  A: [F_CENSO, F_CODIGOS, F_RADIOS, F_EPH, F_IGN, F_MIC],
   B: [F_IGN],
   C: [F_ENERGIA, F_IGN],
   D: [F_IGN],
@@ -717,8 +718,9 @@ $("#barrasProv").addEventListener("click", e => {
 });
 
 /* ---------- ficha ---------- */
-function abrirFicha(m) {
+async function abrirFicha(m) {
   if (!m) return;
+  if (m.eph && !est.eph) { try { est.eph = await json("eph_aglomerados.json"); } catch (e) { /* se muestra sin la comparación */ } }
   mapa.closePopup();
   const km = v => (v == null ? "—" : fmt(v) + " km");
   const dato = (l, v) => `<div><dt>${esc(l)}</dt><dd>${v}</dd></div>`;
@@ -736,10 +738,12 @@ function abrirFicha(m) {
     <dl>
       ${dato("Edad mediana", m.em != null ? m.em + " años" : "Sin dato")}
       ${dato("Población económicamente activa", m.pea != null ? fmt(m.pea) : "Sin dato")}
-      ${dato("Tasa de actividad", m.pea_t != null ? fmt1(m.pea_t) + " %" : "Sin dato")}
-      ${dato("Desocupación", m.des_t != null ? fmt1(m.des_t) + " %" : "Sin dato")}
+      ${dato("Tasa de actividad · sobre 14 años y más", m.pea_t != null ? fmt1(m.pea_t) + " %" : "Sin dato")}
+      ${dato("Tasa de actividad · sobre la población total", m.pea != null && (m.pob_r || m.pob) ? fmt1((100 * m.pea) / (m.pob_r || m.pob)) + " %" : "Sin dato")}
+      ${dato("Desocupación (sobre la población activa)", m.des_t != null ? fmt1(m.des_t) + " %" : "Sin dato")}
     </dl>
     <p class="nota" style="padding:0">${origenDemografico(m)}</p>
+    ${bloqueEPH(m)}
     <h4>Distancia a las grandes ciudades</h4>
     <dl>${dato("Buenos Aires", km(m.d_ba))}${dato("Córdoba", km(m.d_cor))}${dato("Rosario", km(m.d_ros))}</dl>
     <h4>Transporte y logística</h4>
@@ -763,10 +767,26 @@ function abrirFicha(m) {
 }
 $("#ficha").addEventListener("click", e => { if (e.target === $("#ficha")) $("#ficha").close(); });
 
+function bloqueEPH(m) {
+  const a = m.eph && est.eph && est.eph.aglomerados[m.eph];
+  if (!a) return "";
+  const pc = v => fmt1(v) + " %";
+  const ag = a.n === m.n ? "" : ` (aglomerado ${esc(a.n)})`;
+  return `<h4>Encuesta Permanente de Hogares · INDEC · ${esc(est.eph.periodo)}${ag}</h4>
+    <dl>
+      <div><dt>Tasa de actividad (sobre la población total)</dt><dd>${pc(a.act)}</dd></div>
+      <div><dt>Tasa de empleo</dt><dd>${pc(a.emp)}</dd></div>
+      <div><dt>Desocupación</dt><dd>${pc(a.des)}</dd></div>
+      <div><dt>Población del aglomerado</dt><dd>${fmt(a.pob)}</dd></div>
+      <div><dt>Población económicamente activa</dt><dd>${fmt(a.pea)}</dd></div>
+    </dl>
+    <p class="nota" style="padding:0">Estas cifras no coinciden con las del Censo y no es un error: la Encuesta de Hogares es una muestra trimestral (hay un margen de error), mide el conjunto del aglomerado, que puede incluir otros gobiernos locales, y calcula la actividad sobre la población total. El Censo 2022 es de mayo de 2022 y cuenta a todos los habitantes; su tasa de actividad se calcula sobre los de 14 años y más. Sólo existe para 31 aglomerados urbanos.</p>`;
+}
+
 function origenDemografico(m) {
-  if (m.fx === "radios") return `Calculado con el Censo 2022 por radio censal${m.comp > 0 ? ` (el ${fmt1(m.comp)} % de la población está en radios compartidos con otro gobierno local y se repartió según las viviendas)` : ""}.`;
-  if (m.fx === "oficial") return "Dato oficial del INDEC para toda la Ciudad Autónoma de Buenos Aires.";
-  if (m.fx === "dpto") return `Sin dato propio: son valores del departamento ${esc(m.dpn || "")} (el cuadro por radios no incluye este gobierno local).`;
+  if (m.fx === "radios") return `Censo 2022, calculado por radio censal${m.comp > 0 ? ` (el ${fmt1(m.comp)} % de la población está en radios compartidos con otro gobierno local y se repartió según las viviendas)` : ""}.`;
+  if (m.fx === "oficial") return "Censo 2022: dato oficial del INDEC para toda la Ciudad Autónoma de Buenos Aires.";
+  if (m.fx === "dpto") return `Censo 2022, sin dato propio: son valores del departamento ${esc(m.dpn || "")} (el cuadro por radios no incluye este gobierno local).`;
   return "";
 }
 

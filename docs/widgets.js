@@ -79,7 +79,7 @@ const WIDGETS = {
     W("A3 · Población según Censo 2022", async () => {
       const filas = [...est.vis].sort((a, b) => a.pv.localeCompare(b.pv, "es") || (b.pob || 0) - (a.pob || 0))
         .map(m => [corto(m.pv), m.n, m.pob, m.em, m.pea, m.pea_t, m.d_ba, m.d_cor, m.d_ros, m.d_puerto]);
-      return tablaHTML("tA", [{ t: "Provincia" }, { t: "Gobierno local" }, { t: "Habitantes", num: 1 }, { t: "Edad mediana (años)", num: 1 }, { t: "Pobl. económicamente activa", num: 1 }, { t: "Tasa de actividad (%)", num: 1, f: v => v.toLocaleString("es-AR", { maximumFractionDigits: 1 }) }, { t: "Dist. Buenos Aires (km)", num: 1 }, { t: "Dist. Córdoba (km)", num: 1 }, { t: "Dist. Rosario (km)", num: 1 }, { t: "Dist. al puerto más cercano (km)", num: 1 }], filas);
+      return tablaHTML("tA", [{ t: "Provincia" }, { t: "Gobierno local" }, { t: "Habitantes", num: 1 }, { t: "Edad mediana (años)", num: 1 }, { t: "Pobl. económicamente activa", num: 1 }, { t: "Tasa de actividad, 14 años y más (%)", num: 1, f: v => v.toLocaleString("es-AR", { maximumFractionDigits: 1 }) }, { t: "Dist. Buenos Aires (km)", num: 1 }, { t: "Dist. Córdoba (km)", num: 1 }, { t: "Dist. Rosario (km)", num: 1 }, { t: "Dist. al puerto más cercano (km)", num: 1 }], filas);
     }),
     W("A4 · Población económicamente activa por provincia", async () => {
       const por = {};
