@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mapa de inteligencia competitiva · Argentina</title>
+<meta name="description" content="Mapa de los 2.314 gobiernos locales de la Argentina con población, rutas, energía, combustibles, salud, industrias, puertos, fronteras y comercio exterior.">
+<meta name="theme-color" content="#0b1d3a">
+<link rel="icon" type="image/png" href="assets/neeti-icono.png">
+<link rel="apple-touch-icon" href="assets/neeti-icono.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="estilo.css?v=21">
+</head>
+<body>
+<a class="saltar" href="#principal">Ir al contenido principal</a>
+
+<header class="masthead">
+  <img src="assets/neeti-logo.png" alt="NEETI" class="masthead-logo" width="53" height="18">
+  <span class="masthead-titulo">Mapa de inteligencia competitiva</span>
+  <span class="masthead-nota">Datos abiertos del INDEC y del IGN</span>
+</header>
+
+<div class="herramientas" role="toolbar" aria-label="Accesibilidad y búsqueda">
+  <div class="acc" id="acc">
+    <span class="rotulo">Accesibilidad</span>
+    <button type="button" class="boton chico" data-acc="menos" aria-label="Disminuir el tamaño del texto">A−</button>
+    <button type="button" class="boton chico" data-acc="mas" aria-label="Aumentar el tamaño del texto">A+</button>
+    <button type="button" class="boton chico" data-acc="gris" aria-pressed="false">Escala de grises</button>
+    <button type="button" class="boton chico" data-acc="contraste" aria-pressed="false">Alto contraste</button>
+    <button type="button" class="boton chico" data-acc="subrayar" aria-pressed="false">Subrayar enlaces</button>
+    <button type="button" class="boton chico" data-acc="reset">Restablecer</button>
+  </div>
+  <div class="buscador">
+    <input id="buscar" type="search" placeholder="Buscar gobierno local…" autocomplete="off" aria-label="Buscar gobierno local">
+    <ul id="sugerencias" class="sugerencias" hidden></ul>
+  </div>
+</div>
+
+<nav class="menu" aria-label="Secciones del sitio">
+  <a href="#sobre">Sobre el mapa</a>
+  <a href="#mapa-seccion">Mapa</a>
+  <a href="#estudios">Estudios</a>
+  <a href="preguntas.html">Preguntas frecuentes</a>
+  <a href="#contacto" id="menuContacto" hidden>Contacto</a>
+</nav>
+
+<main id="principal">
+
+  <section class="portada">
+    <p class="migas"><a href="#principal">Portada</a> <span aria-hidden="true">/</span> Mapa de inteligencia competitiva</p>
+    <h1 class="titulo">Mapa de inteligencia competitiva</h1>
+  </section>
+
+  <section class="sobre" id="sobre" aria-labelledby="hSobre">
+    <div class="sobre-texto">
+      <h2 id="hSobre" class="rotulo">Sobre el mapa</h2>
+      <p>El <strong>Mapa de inteligencia competitiva</strong> reúne en una sola pantalla información pública de los 2.314 gobiernos locales de la Argentina: población, rutas, energía, combustibles, salud, industrias, puertos, fronteras y comercio exterior. Sirve de apoyo para planificar el territorio y para comparar lugares donde producir o invertir.</p>
+      <p>La plataforma integra datos del INDEC (Censo 2022 y exportaciones por provincia) y del Instituto Geográfico Nacional. Es una herramienta de análisis preliminar: no reemplaza los estudios técnicos, ambientales y legales que cada proyecto necesita.</p>
+      <p><a class="boton boton-principal" href="preguntas.html">Preguntas frecuentes</a></p>
+    </div>
+    <ol class="pasos" aria-label="Cómo usar el mapa">
+      <li><b>Elegí una sección.</b> Las pestañas A a I cambian las capas y los indicadores.</li>
+      <li><b>Filtrá.</b> Por provincia, región, tamaño del gobierno local o distancia a las grandes ciudades.</li>
+      <li><b>Tocá un círculo o un nombre de la lista.</b> Se abre la ficha con población, distancias y servicios cercanos.</li>
+    </ol>
+  </section>
+
+  <section class="mapa-seccion" id="mapa-seccion" aria-labelledby="hMapa">
+    <h2 id="hMapa" class="rotulo seccion-rotulo">Mapa logístico 2026 · Argentina</h2>
+
+    <nav class="pestanas" id="pestanas" aria-label="Secciones del mapa"></nav>
+
+    <section class="filtros" id="filtros">
+      <div class="filtros-barra">
+        <button type="button" id="btnFiltros" class="boton" aria-expanded="false" aria-controls="filtrosCuerpo">
+          Filtros <span id="contFiltros" class="cont" hidden>0</span>
+        </button>
+      </div>
+      <div id="filtrosCuerpo" class="filtros-cuerpo">
+        <label>Región
+          <select id="fRegion"><option value="">Todas</option></select>
+        </label>
+        <label>Provincia
+          <select id="fProvincia"><option value="">Todas</option></select>
+        </label>
+        <label>Tipo de gobierno local
+          <select id="fTipo"><option value="">Todos</option></select>
+        </label>
+        <label>Escala (habitantes)
+          <select id="fPob"><option value="">Todas</option></select>
+        </label>
+        <label>Dist. a Buenos Aires
+          <select id="fBA"><option value="">Todas</option></select>
+        </label>
+        <div id="masFiltros" class="mas-filtros" hidden>
+          <label>Dist. a Córdoba
+            <select id="fCOR"><option value="">Todas</option></select>
+          </label>
+          <label>Dist. a Rosario
+            <select id="fROS"><option value="">Todas</option></select>
+          </label>
+          <label>Dato de población
+            <select id="fDato">
+              <option value="">Todos</option>
+              <option value="si">Sólo con dato</option>
+              <option value="no">Sin dato de población</option>
+            </select>
+          </label>
+        </div>
+        <div class="filtros-acciones">
+          <button type="button" id="btnMas" class="enlace">Mostrar más filtros</button>
+          <button type="button" id="btnLimpiar" class="enlace">Limpiar filtros</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="kpis" id="kpis" aria-live="polite"></section>
+
+    <div class="panel">
+      <div class="panel-titulo"><h3 id="tituloMapa"></h3></div>
+      <div class="capas" id="capas" role="group" aria-label="Capas del mapa"></div>
+      <div class="mapa-caja" id="mapaCaja">
+        <div id="mapa" aria-label="Mapa"></div>
+        <div class="leyenda" id="leyenda"></div>
+      </div>
+      <p class="nota" id="notaMapa"></p>
+    </div>
+
+    <div class="panel" id="seccionRanking">
+      <div class="panel-titulo"><h3 id="tituloRanking"></h3>
+        <button type="button" id="btnOrden" class="enlace">Invertir orden</button>
+      </div>
+      <ol class="ranking" id="ranking"></ol>
+      <button type="button" id="btnMasRanking" class="boton ver-mas">Ver más</button>
+    </div>
+
+    <div id="widgets"></div>
+
+    <div class="panel" id="seccionProvincias" hidden>
+      <div class="panel-titulo"><h3>Habitantes por provincia</h3></div>
+      <ol class="barras" id="barrasProv"></ol>
+    </div>
+
+    <section class="panel comentarios" id="comentarios" hidden aria-labelledby="hCom">
+      <div class="panel-titulo"><h3 id="hCom">Dejanos tus comentarios</h3></div>
+      <form id="formComentarios" class="formulario" novalidate>
+        <fieldset>
+          <legend>Nombre completo</legend>
+          <div class="par">
+            <label>Nombres<input name="nombres" autocomplete="given-name" required></label>
+            <label>Apellidos<input name="apellidos" autocomplete="family-name" required></label>
+          </div>
+        </fieldset>
+        <label>Número de celular<input name="celular" type="tel" inputmode="tel" autocomplete="tel" placeholder="+54 9 …"></label>
+        <label>Correo electrónico<input name="correo" type="email" autocomplete="email" required></label>
+        <label>Empresa<input name="empresa" autocomplete="organization"></label>
+        <label>CUIT<input name="cuit" inputmode="numeric" placeholder="XX-XXXXXXXX-X"></label>
+        <fieldset>
+          <legend>Quiero</legend>
+          <label class="opcion"><input type="checkbox" name="quiero" value="Registrar mi negocio para el mapa"> Registrar mi negocio para el mapa</label>
+          <label class="opcion"><input type="checkbox" name="quiero" value="Recomendar corrección de datos"> Recomendar corrección de datos</label>
+          <label class="opcion"><input type="checkbox" name="quiero" value="Dejar comentarios"> Dejar comentarios</label>
+          <label class="opcion"><input type="checkbox" name="quiero" value="Otro"> Otro</label>
+        </fieldset>
+        <label>Descripción<textarea name="descripcion" rows="5"></textarea></label>
+        <p class="estado-form" id="estadoForm" role="status"></p>
+        <button type="submit" class="boton boton-principal">Enviar</button>
+      </form>
+    </section>
+  </section>
+
+  <section class="estudios" id="estudios" aria-labelledby="hEstudios">
+    <h2 id="hEstudios" class="rotulo">Estudios e informes</h2>
+    <p class="bajada">Documentos oficiales que complementan la información del mapa.</p>
+    <ul class="lista-estudios">
+      <li>
+        <h3>Estudio de nodos logísticos Argentina–Paraguay</h3>
+        <p>Informe final elaborado para la CAF sobre la logística de los dos países.</p>
+        <a href="https://www.mic.gov.py/wp-content/uploads/2026/09/SPIM-CAF-Argentina-Paraguay-Informe-Final-20240922.pdf" rel="noopener" target="_blank">Descargar (PDF)</a>
+      </li>
+      <li>
+        <h3>Origen provincial de las exportaciones. Año 2025</h3>
+        <p>Informe técnico del INDEC con exportaciones por provincia, rubro y destino.</p>
+        <a href="https://www.indec.gob.ar/uploads/informesdeprensa/opex_03_26929F77A2CA.pdf" rel="noopener" target="_blank">Descargar (PDF)</a>
+      </li>
+      <li>
+        <h3>Censo 2022: población y viviendas por gobierno local</h3>
+        <p>Cuadros del INDEC para el total del país y por provincia.</p>
+        <a href="https://censo.gob.ar/index.php/gobiernos-locales/" rel="noopener" target="_blank">Ver cuadros</a>
+      </li>
+    </ul>
+  </section>
+
+  <section class="contacto" id="contacto" aria-labelledby="hContacto" hidden>
+    <h2 id="hContacto" class="rotulo">Contacto</h2>
+    <div id="contactoCuerpo"></div>
+  </section>
+
+</main>
+
+<footer class="pie">
+  <img src="assets/neeti-logo.png" alt="NEETI" class="pie-logo" width="39" height="13">
+  <div class="pie-texto">
+    <p><strong>Fuentes.</strong> Población y viviendas: INDEC, Censo Nacional de Población, Hogares y Viviendas 2022 (cuadro por gobierno local, actualizado el 03/06/2026). Exportaciones: INDEC, Origen provincial de las exportaciones. Ubicación de los gobiernos locales e infraestructura: Instituto Geográfico Nacional (IGN), Capas SIG. Mapa base: © colaboradores de OpenStreetMap.</p>
+    <p id="pieCobertura"></p>
+    <p>Las distancias son en línea recta desde el punto que el IGN asigna a cada gobierno local, no por camino.</p>
+  </div>
+</footer>
+
+<dialog id="ficha" class="ficha">
+  <form method="dialog"><button class="cerrar" aria-label="Cerrar">×</button></form>
+  <div id="fichaCuerpo"></div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script src="config.js"></script>
+<script src="comun.js"></script>
+<script src="widgets.js?v=21"></script>
+<script src="app.js?v=21"></script>
+</body>
+</html>
